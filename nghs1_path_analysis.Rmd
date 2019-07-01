@@ -1,0 +1,658 @@
+---
+title: "NGHS1 Path Analysis"
+author: "Daniel O'Leary"
+date: "November 14, 2018"
+output: 
+  github_document:
+    toc: true
+---
+
+# Setup
+
+## Load Packages
+```{r setup, include=FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, haven, broom, glmnet, caret, randomForest, lavaan, regsem, semPlot)
+```
+
+
+## Load Data
+
+```{r load data, warning = FALSE}
+semTrainingData <- 
+  read_csv("G:/My Drive/research/projects/phsr1/nghs1/nghs1_data/nghs1_sem_training_data.csv")
+
+semTestingData <- 
+  read_csv("G:/My Drive/research/projects/phsr1/nghs1/nghs1_data/nghs1_sem_testing_data.csv")
+
+semAllData <-
+  read_csv("G:/My Drive/research/projects/phsr1/nghs1/nghs1_data/nghs1_imputed_new2.csv") %>% 
+  mutate(y0_pbmi = (y0_WT_fm2 * 703) / (y0_HTFT_fm2 * 12 * y0_HTFT_fm2 * 12))
+
+```
+
+
+## Check Dimensions
+
+```{r}
+dim(semTrainingData)
+dim(semTestingData)
+```
+
+
+# Path Models
+
+Good fit for models:
+
+  * Chi-square p-val > 0.05 [not necc. w/ large sample size]
+  * TLI >= 0.95
+  * CFI >= 0.90
+  * RMSEA < 0.08
+  * SRMR < 0.08
+  
+## Stress Psych Initial Model
+
+```{r}
+mod_psych_stress_initial <-
+  '
+    #################
+    ## Regressions ##
+    #################  
+     
+    y10_QI ~ y0_CATINC + y0_QI + y0_pbmi + y0_RACE  
+
+    y10_QI ~ y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT + y2_STRESS
+
+    y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT ~ y2_STRESS
+
+    y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT + y2_STRESS ~ y0_CATINC + y0_QI + y0_RACE + y0_pbmi
+
+    y0_QI ~ y0_pbmi + y0_CATINC + y0_RACE
+
+    y0_pbmi + y0_CATINC ~ y0_RACE
+
+    #################
+    ## Covariances ##
+    #################    
+
+    y5_AWARE ~~ y5_DISTRST + y5_INEFCT + y5_SELWT
+
+    y5_DISTRST ~~ y5_INEFCT + y5_SELWT
+
+    y5_INEFCT ~~ y5_SELWT
+
+    y0_pbmi ~~ y0_CATINC
+
+
+  '
+
+fit_psych_stress_initial <- 
+  sem(
+    mod_psych_stress_initial, 
+    data = semTrainingData, 
+    estimator = "MLM"
+  )
+
+summary(
+  fit_psych_stress_initial, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+## Stress Psych Pruned Model
+
+```{r}
+mod_pysch_stress_pruned <-
+  '
+    ######################
+    ## Latent Variables ##
+    ######################
+
+
+    #################
+    ## Regressions ##
+    #################  
+     
+    y10_QI ~ y0_CATINC + y0_QI + y0_pbmi + y0_RACE  
+
+    y10_QI ~ y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT
+
+    y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT ~ y2_STRESS 
+
+    y5_AWARE + y5_DISTRST + y5_INEFCT + y2_STRESS ~ y0_CATINC + y0_RACE + y0_pbmi
+
+    y5_AWARE + y5_INEFCT + y5_SELWT ~ y0_QI 
+
+    y5_SELWT ~ y0_pbmi + y0_CATINC + y0_RACE
+
+    y0_QI ~ y0_pbmi + 0*y0_CATINC + y0_RACE
+
+    y0_pbmi + y0_CATINC ~ y0_RACE
+
+    
+    #################
+    ## Covariances ##
+    #################    
+
+    y5_AWARE ~~ y5_DISTRST + y5_INEFCT + y5_SELWT 
+
+    y5_DISTRST ~~ y5_INEFCT + y5_SELWT 
+
+    y5_INEFCT ~~ y5_SELWT 
+
+    y2_STRESS ~~ 0*y0_QI   
+
+    y0_pbmi ~~ 0*y0_CATINC
+  
+  '
+
+fit_psych_stress_pruned <- 
+  sem(
+    mod_pysch_stress_pruned, 
+    data = semTestingData, 
+    estimator = "MLM"
+  )
+
+summary(
+  fit_psych_stress_pruned, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+## Stress Psych Pruned Model - Parameter Export
+
+```{r}
+standardizedSolution(
+  fit_pysch_stress_pruned,
+  type = "std.all",
+  se = TRUE,
+  zstat = TRUE,
+  pvalue = TRUE,
+  ci = TRUE,
+  level = 0.95
+) %>%
+  mutate_if(
+    ~any(is.numeric(.)),
+    ~round(., 3)
+  ) %>%
+  write.table(
+    "G:/My Drive/research/projects/phsr1/nghs1/nghs1_plots/stress_psych_table_std.csv",
+    sep =","
+  )
+```
+
+
+## Stress Psych Pruned Model - All Data
+
+```{r}
+fit_pysch_stress_pruned_ad <-
+  sem(
+    mod_pysch_stress_pruned, 
+    data = semAllData, 
+    estimator = "MLM"
+  )
+
+summary(
+  fit_pysch_stress_pruned_ad, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+# Anxiety Psych
+
+## Anxiety Psych Initial Model
+
+```{r }
+mod_psych_anx_initial <-
+  '
+    #################
+    ## Regressions ##
+    #################  
+     
+    y10_QI ~ y0_CATINC + y0_QI + y0_pbmi + y0_RACE  
+
+    y10_QI ~ y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT + y3_ANXR
+
+    y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT ~ y3_ANXR
+
+    y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT + y3_ANXR ~ y0_CATINC + y0_QI + y0_RACE + y0_pbmi
+
+    y0_QI ~ y0_pbmi + y0_CATINC + y0_RACE
+
+    y0_pbmi + y0_CATINC ~ y0_RACE
+
+    #################
+    ## Covariances ##
+    #################    
+
+    y5_AWARE ~~ y5_DISTRST + y5_INEFCT + y5_SELWT 
+
+    y5_DISTRST ~~ y5_INEFCT + y5_SELWT 
+
+    y5_INEFCT ~~ y5_SELWT 
+
+    y0_pbmi ~~ y0_CATINC
+  '
+
+fit_psych_anx_initial <- 
+  sem(
+    mod_psych_anx_initial, 
+    data = semTrainingData, 
+    estimator = "MLM"
+  )
+
+summary(
+  fit_psych_anx_initial, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+## Anxiety Psych Pruned Model
+
+```{r}
+mod_psych_anx_pruned <-
+  '
+    #################
+    ## Regressions ##
+    #################  
+     
+    y10_QI ~ y0_CATINC + y0_QI + y0_pbmi + y0_RACE  
+
+    y10_QI ~ y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT 
+
+    y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT ~ y3_ANXR 
+
+    y5_AWARE + y5_DISTRST + y5_INEFCT + y3_ANXR ~ y0_CATINC + y0_pbmi
+
+    y5_AWARE + y5_DISTRST + y5_INEFCT ~ y0_RACE
+
+    y5_AWARE + y5_INEFCT + y5_SELWT ~ y0_QI 
+
+    y5_SELWT ~ y0_pbmi + y0_CATINC + y0_RACE
+
+    y0_QI ~ y0_pbmi + 0*y0_CATINC + y0_RACE
+
+    y0_pbmi + y0_CATINC ~ y0_RACE
+
+    
+    #################
+    ## Covariances ##
+    #################    
+
+    y5_AWARE ~~ y5_DISTRST + y5_INEFCT + y5_SELWT 
+
+    y5_DISTRST ~~ y5_INEFCT + y5_SELWT 
+
+    y5_INEFCT ~~ y5_SELWT 
+
+    y3_ANXR ~~ 0*y0_QI + 0*y0_RACE   
+
+    y0_pbmi ~~ 0*y0_CATINC
+
+  '
+
+
+fit_psych_anx_pruned <-
+  sem(
+    mod_psych_anx_pruned, 
+    data = semTestingData, 
+    estimator = "MLM"
+  )
+
+summary(
+  fit_psych_anx_pruned, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+## Anxiety Psych Pruned Model - Parameter Export
+
+```{r}
+standardizedSolution(
+  fit_psych_anx_pruned, 
+  type = "std.all", 
+  se = TRUE, 
+  zstat = TRUE, 
+  pvalue = TRUE, 
+  ci = TRUE, 
+  level = 0.95
+) %>%
+  mutate_if(
+    ~any(is.numeric(.)), 
+    ~round(., 3)
+  ) %>%
+  write.table(
+    "G:/My Drive/research/projects/phsr1/nghs1/nghs1_plots/anx_psych_table_std.csv", 
+    sep =","
+  )
+```
+
+
+## Anxiety Psych Pruned Model - All Data
+
+```{r}
+fit_psych_anx_pruned_ad <-
+  sem(
+    mod_psych_anx_pruned, 
+    data = semAllData, 
+    estimator = "MLM"
+  )
+
+summary(
+  fit_psych_anx_pruned_ad, 
+  standardized = TRUE, 
+  fit.measures = TRUE, 
+  rsq = TRUE
+)
+```
+
+
+# Stress Behavior
+
+## Stress Behavior Initial Model
+
+```{r}
+mod_behav_stress_initial <-
+  '
+    #################
+    ## Regressions ##
+    #################  
+     
+    y10_QI ~ y0_CATINC + y0_QI + y0_pbmi + y0_RACE    
+
+    y10_QI ~ y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y4_eat_VITAMINS + y7_SECRET + y2_STRESS
+
+    y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y4_eat_VITAMINS + y7_SECRET ~ y2_STRESS
+
+    y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y4_eat_VITAMINS + y7_SECRET + y2_STRESS ~ y0_CATINC + y0_QI + y0_RACE + y0_pbmi
+
+    y0_QI ~ y0_pbmi + y0_CATINC + y0_RACE
+
+    y0_pbmi + y0_CATINC ~ y0_RACE
+
+
+    #################
+    ## Covariances ##
+    #################  
+  
+    y6_eat_SNKFOOD2 ~~ y5_eat_STOPEAT + y4_eat_VITAMINS + y7_SECRET 
+
+    y5_eat_STOPEAT ~~ y4_eat_VITAMINS + y7_SECRET 
+
+    y4_eat_VITAMINS ~~ y7_SECRET 
+
+    y0_pbmi ~~ y0_CATINC
+    
+  '
+fit_behav_stress_initial <- 
+  sem(
+    mod_behav_stress_initial, 
+    data = semTestingData %>% mutate(y5_eat_STOPEAT = as.factor(y5_eat_STOPEAT)), 
+    estimator = "DWLS", 
+    ordered = c("y5_eat_STOPEAT")
+  )
+
+summary(
+  fit_behav_stress_initial, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+## Stress Behavior Pruned Model
+
+```{r}
+mod_behav_stress_pruned <-
+  '
+    #################
+    ## Regressions ##
+    #################  
+     
+    y10_QI ~ y0_CATINC + y0_QI + y0_pbmi + y0_RACE    
+
+    y10_QI ~ y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y7_SECRET 
+
+    y6_eat_SNKFOOD2 ~ y2_STRESS + y0_CATINC + y0_QI + y0_RACE + y0_pbmi
+    
+    y5_eat_STOPEAT ~ y2_STRESS + y0_QI + y0_RACE
+    
+    y7_SECRET ~ y2_STRESS 
+
+    y2_STRESS ~ y0_CATINC + y0_pbmi + y0_RACE
+
+    y0_QI ~ y0_pbmi + 0*y0_CATINC + y0_RACE
+
+    y0_pbmi + y0_CATINC ~ y0_RACE
+
+
+    #################
+    ## Covariances ##
+    #################  
+  
+    y6_eat_SNKFOOD2 ~~ 0*y5_eat_STOPEAT + y7_SECRET 
+
+    y5_eat_STOPEAT ~~ 0*y7_SECRET 
+
+    y0_pbmi ~~ 0*y0_CATINC
+    
+  '
+
+fit_behav_stress_pruned <- 
+  sem(
+    mod_behav_stress_pruned, 
+    data = semTestingData %>% mutate(y5_eat_STOPEAT = as.factor(y5_eat_STOPEAT)), 
+    estimator = "DWLS", 
+    ordered = c("y5_eat_STOPEAT")
+  )
+
+summary(
+  fit_behav_stress_pruned, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+## Stress Behavior Pruned Model - Parameter Export
+
+```{r}
+standardizedSolution(
+  fit_behav_stress_pruned, 
+  type = "std.all", 
+  se = TRUE, 
+  zstat = TRUE, 
+  pvalue = TRUE, 
+  ci = TRUE, 
+  level = 0.95
+) %>%
+  mutate_if(
+    ~any(is.numeric(.)), 
+    ~round(., 3)
+  ) %>%
+  write.table(
+    "G:/My Drive/research/projects/phsr1/nghs1/nghs1_plots/stress_behav_table_std.csv", 
+    sep =","
+  )
+```
+
+
+## Stress Behavior Pruned Model - All Data
+
+```{r}
+fit_behav_stress_pruned_ad <-
+  sem(
+    mod_behav_stress_pruned, 
+    data = semAllData %>% mutate(y5_eat_STOPEAT = as.factor(y5_eat_STOPEAT)), 
+    estimator = "DWLS", 
+    ordered = c("y5_eat_STOPEAT")
+  )
+
+summary(
+  fit_behav_stress_pruned_ad,
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+# Anxiety Behavior
+
+## Anxiety Behavior Initial Model
+
+```{r}
+mod_behav_anx_initial <-
+  '
+    #################
+    ## Regressions ##
+    #################  
+     
+    y10_QI ~ y0_CATINC + y0_QI + y0_pbmi + y0_RACE    
+
+    y10_QI ~ y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y4_eat_VITAMINS + y7_SECRET + y3_ANXR
+
+    y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y4_eat_VITAMINS + y7_SECRET ~ y3_ANXR
+
+    y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y4_eat_VITAMINS + y7_SECRET + y3_ANXR ~ y0_CATINC + y0_QI + y0_RACE + y0_pbmi
+
+    y0_QI ~ y0_pbmi + y0_CATINC + y0_RACE
+
+    y0_pbmi + y0_CATINC ~ y0_RACE
+
+
+    #################
+    ## Covariances ##
+    #################  
+  
+    y6_eat_SNKFOOD2 ~~ y5_eat_STOPEAT + y4_eat_VITAMINS + y7_SECRET 
+
+    y5_eat_STOPEAT ~~ y4_eat_VITAMINS + y7_SECRET 
+
+    y4_eat_VITAMINS ~~ y7_SECRET 
+
+    y0_pbmi ~~ y0_CATINC
+    
+  '
+
+fit_behav_anx_initial <- 
+  sem(
+    mod_behav_anx_initial, 
+    data = semTrainingData %>% mutate(y5_eat_STOPEAT = as.factor(y5_eat_STOPEAT)), 
+    estimator = "DWLS", 
+    ordered = c("y5_eat_STOPEAT")
+  )
+
+summary(
+  fit_behav_anx_initial, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+## Anxiety Behavior Pruned Model
+
+```{r}
+mod_behav_anx_pruned <-
+
+  '
+    #################
+    ## Regressions ##
+    #################  
+     
+    y10_QI ~ y0_CATINC + y0_QI + y0_pbmi + y0_RACE    
+
+    y10_QI ~ y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y7_SECRET 
+
+    y6_eat_SNKFOOD2 ~ y0_CATINC + y0_QI + y0_RACE
+    
+    y5_eat_STOPEAT ~ y3_ANXR + y0_CATINC + y0_QI + y0_pbmi
+    
+    y7_SECRET ~ y3_ANXR 
+
+    y3_ANXR ~ y0_CATINC + y0_pbmi
+
+    y0_QI ~ y0_pbmi + 0*y0_CATINC + y0_RACE
+
+    y0_pbmi + y0_CATINC ~ y0_RACE
+
+
+    #################
+    ## Covariances ##
+    #################  
+  
+    y6_eat_SNKFOOD2 ~~ 0*y5_eat_STOPEAT + y7_SECRET 
+
+    y5_eat_STOPEAT ~~ 0*y7_SECRET 
+
+    y0_pbmi ~~ 0*y0_CATINC
+    
+  '
+
+fit_behav_anx_pruned <- 
+  sem(
+    mod_behav_anx_pruned, 
+    data = semTestingData %>% mutate(y5_eat_STOPEAT = as.factor(y5_eat_STOPEAT)), 
+    estimator = "DWLS", 
+    ordered = c("y5_eat_STOPEAT")
+  )
+
+summary(
+  fit_behav_anx_pruned, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+
+
+## Anxiety Behavior Pruned Model - Parameter Export
+
+```{r}
+standardizedSolution(
+  fit_behav_anx_pruned, 
+  type = "std.all", 
+  se = TRUE, 
+  zstat = TRUE, 
+  pvalue = TRUE, 
+  ci = TRUE, 
+  level = 0.95
+) %>%
+  mutate_if(
+    ~any(is.numeric(.)), 
+    ~round(., 3)
+    ) %>%
+  write.table(
+    "G:/My Drive/research/projects/phsr1/nghs1/nghs1_plots/anx_behav_table_std.csv", 
+    sep = ","
+  )
+```
+
+
+## Anxiety Behavior Pruned Model - All Data
+
+```{r}
+fit_behav_anx_pruned_ad <-
+  sem(
+    mod_behav_anx_pruned, 
+    data = semAllData%>% mutate(y5_eat_STOPEAT = as.factor(y5_eat_STOPEAT)), 
+    estimator = "DWLS", 
+    ordered = c("y5_eat_STOPEAT")
+  )
+
+summary(
+  fit_behav_anx_pruned_ad, 
+  standardized = TRUE, 
+  fit.measures = TRUE
+)
+```
+

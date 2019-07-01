@@ -1,0 +1,1364 @@
+---
+title: "NGHS1 Variable Selection"
+author: "Daniel O'Leary"
+date: "October 29, 2018"
+output: github_document
+---
+
+# Setup
+
+```{r load pacakges}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, haven, broom, glmnet, caret, randomForest)
+```
+
+```{r load data, warning = FALSE}
+lassoTrainingData <- 
+  read_csv("G:/My Drive/research/projects/phsr1/nghs1/nghs1_data/nghs1_lasso_training_data.csv") %>% 
+  as_data_frame()
+
+set.seed(1987)
+```
+
+```{r functions}
+# Get best result function
+getBestResult = function(caret_fit) {
+  best = which(rownames(caret_fit$results) == rownames(caret_fit$bestTune))
+  best_result = caret_fit$results[best, ]
+  rownames(best_result) = NULL
+  best_result
+}
+
+
+plotVarSelection <- function(model, data) {
+  num_rows <- nrow(summary(coef(model$finalModel, model$bestTune$lambda)))
+  
+  coef_sum <- summary(coef(model$finalModel, model$bestTune$lambda))[2:num_rows, "i"]
+  
+  coefs <- 
+    data.frame(
+      names(data)[coef_sum - 1], 
+      summary(coef(model$finalModel, model$bestTune$lambda))[2:num_rows,3]
+    )
+  
+  names(coefs) <- c("var", "coef")
+  
+  coefs %>% 
+    ggplot(aes(fct_reorder(var, coef), coef)) +
+    geom_point() + 
+    coord_flip()
+}
+```
+
+```{r parameters}
+# set up parameters
+fitControl <-
+  trainControl(
+    ## 5-fold CV
+    method = "repeatedcv",
+    number = 5,
+    ## repeated ten times
+    repeats = 10
+  )
+
+fitControl2 <- 
+  trainControl(
+    ## 5-fold CV
+    method = "repeatedcv",
+    number = 5,
+    ## repeated ten times
+    repeats = 10
+  )
+  
+trainGrid <-
+  expand.grid(
+    alpha = 1,
+    lambda = 10^seq(10, -2, length = 100)
+  )
+```
+
+
+# Variable selection
+
+## Selection 1: Negative Emotions Predicting Change in BMI
+
+Let's start with the two scales in the dataset that measure emotions, the **Manifest Anxiety Scale** and the **Perceived Stress Scale**. We'll only look at variables up to year 5 because we want to be able to predict the eating disorders inventory at year 5 with these variables.
+
+```{r}
+# Select data
+psychTrain1 <-
+  lassoTrainingData %>% 
+  select(
+    y10_QI,
+    y2_STRESS,
+    y4_STRESS,
+    y3_ANXR,
+    y5_ANXR
+  ) %>% 
+  filter_all(all_vars(!is.na(.)))
+
+psychTrain1X <- 
+  psychTrain1 %>% 
+  select(-y10_QI)
+
+psychTrain1Y <-
+  psychTrain1 %>% 
+  select(y10_QI)
+```
+
+```{r, warning = FALSE}
+lassoFitPsych1 <- 
+  train(
+    psychTrain1X, 
+    psychTrain1Y$y10_QI, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych1 <-
+  train(
+    psychTrain1X, 
+    psychTrain1Y$y10_QI, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych1, elastic = elnetFitPsych1)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych1)
+getBestResult(elnetFitPsych1)
+```
+
+Elnet selected alpha = 1 which is equivalent to LASSO.
+
+```{r}
+coef(elnetFitPsych1$finalModel, elnetFitPsych1$bestTune$lambda)
+plotVarSelection(elnetFitPsych1, psychTrain1X)
+```
+
+Year 3 anxiety is the only variable selected by the model. We will compare this to year 2 stress for theoretical reasons.
+
+## Selection 2: Income Predicting Negative Emotions
+
+Let's look at which of these emotion variables are predicted by income.
+
+```{r}
+# Select data
+psychTrain2 <-
+  lassoTrainingData %>% 
+  select(
+    y0_CATINC,
+    y2_STRESS,
+    y4_STRESS,
+    y3_ANXR,
+    y5_ANXR
+  ) %>% 
+  filter_all(all_vars(!is.na(.)))
+
+psychTrain2X <- 
+  psychTrain2 %>% 
+  select(-y0_CATINC)
+
+psychTrain2Y <-
+  psychTrain2 %>% 
+  select(y0_CATINC)
+```
+
+```{r, warning = FALSE}
+lassoFitPsych2 <- 
+  train(
+    psychTrain2X, 
+    psychTrain2Y$y0_CATINC, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych2 <-
+  train(
+    psychTrain2X, 
+    psychTrain2Y$y0_CATINC, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych2, elastic = elnetFitPsych2)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych2)
+getBestResult(elnetFitPsych2)
+```
+
+Elnet selected alpha = 1 which is equivalent to LASSO.
+
+```{r}
+coef(lassoFitPsych2$finalModel, lassoFitPsych2$bestTune$lambda)
+plotVarSelection(lassoFitPsych2, psychTrain2X)
+```
+
+Higher income is associated with lower year 3 anxiety and lower year 2 stress. 
+
+## Selection 3: Eating Surveys Predicting BMI
+
+Next, we'll look at the psychological variables that we're most interested in - ones that are somewhat related to eating. For this step, we have the **Eating Disorders Inventory** and the **Emotional Eating Index**.  If we want to go with one year's worth of variables from the first scale, it seems like it makes sense to go with year 5 as this is the only year after the anxiety score for which we currently have all the data. We'll look at 
+
+```{r}
+# Select data
+psychTrain3a <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y10_QI,
+    y5_PERFCT,
+    y5_AWARE,
+    y5_BULIM,
+    y5_DISTRST,
+    y5_INEFCT,
+    y5_FEARS,
+    contains("_eat_WORRYMR"),
+    contains("_eat_SADMR"),
+    contains("_eat_HAPPYMR"),
+    contains("_eat_BOREDMR"),
+    contains("_eat_REWARD"),
+    contains("_eat_MAD"),
+    -contains("y0"),
+    -contains("y2"),
+    -contains("y3")
+  )
+
+psychTrain3Xa <- 
+  psychTrain3a %>% 
+  dplyr::select(-y10_QI)
+
+psychTrain3Ya <-
+  psychTrain3a %>% 
+  dplyr::select(y10_QI)
+```
+
+```{r, warning = FALSE}
+lassoFitPsych3a <- 
+  train(
+    psychTrain3Xa, 
+    psychTrain3Ya$y10_QI, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych3a <-
+  train(
+    psychTrain3Xa, 
+    psychTrain3Ya$y10_QI, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych3a, elastic = elnetFitPsych3a)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych3a)
+getBestResult(elnetFitPsych3a)
+```
+
+```{r}
+coef(lassoFitPsych3a$finalModel, lassoFitPsych3a$bestTune$lambda)
+plotVarSelection(lassoFitPsych3a, psychTrain3Xa)
+```
+
+
+## Selection 4: Income Predicting Eating Surveys
+
+Now let's see which of these variables are associated with income.
+
+```{r}
+# Select data
+psychTrain5X <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y5_PERFCT,
+    y5_AWARE,
+    y5_BULIM,
+    y5_DISTRST,
+    y5_INEFCT,
+    y5_FEARS,
+    contains("_eat_WORRYMR"),
+    contains("_eat_SADMR"),
+    contains("_eat_HAPPYMR"),
+    contains("_eat_BOREDMR"),
+    contains("_eat_REWARD"),
+    contains("_eat_MAD"),
+    -contains("y0"),
+    -contains("y2"),
+    -contains("y3")
+  )
+
+psychTrain5Y <-
+  lassoTrainingData %>% 
+  dplyr::select(y0_CATINC)
+```
+
+```{r, warning = FALSE}
+lassoFitPsych5 <- 
+  train(
+    psychTrain5X, 
+    psychTrain5Y$y0_CATINC, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych5 <-
+  train(
+    psychTrain5X, 
+    psychTrain5Y$y0_CATINC, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych5, elastic = elnetFitPsych5)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych5)
+getBestResult(elnetFitPsych5)
+```
+
+```{r}
+coef(elnetFitPsych5$finalModel, elnetFitPsych5$bestTune$lambda)
+plotVarSelection(elnetFitPsych5, psychTrain5X)
+```
+Higher levels of income are associated with lower levels of AWARE, lower levels of DISTRST.
+
+## Selection 5: Stress Predicting Eating Surveys
+
+Now let's see which of these variables are associated with our stress scale.
+
+```{r}
+# Select data
+psychTrain4dX <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y5_PERFCT,
+    y5_AWARE,
+    y5_BULIM,
+    y5_DISTRST,
+    y5_INEFCT,
+    y5_FEARS,
+    contains("_eat_WORRYMR"),
+    contains("_eat_SADMR"),
+    contains("_eat_HAPPYMR"),
+    contains("_eat_BOREDMR"),
+    contains("_eat_REWARD"),
+    contains("_eat_MAD"),
+    -contains("y0"),
+    -contains("y2"),
+    -contains("y3")
+  )
+
+psychTrain4dY <-
+  lassoTrainingData %>% 
+  dplyr::select(y2_STRESS)
+```
+
+```{r, warning = FALSE}
+lassoFitPsych4d <- 
+  train(
+    psychTrain4dX, 
+    psychTrain4dY$y2_STRESS, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych4d <-
+  train(
+    psychTrain4dX, 
+    psychTrain4dY$y2_STRESS, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych4d, elastic = elnetFitPsych4d)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych4d)
+getBestResult(elnetFitPsych4d)
+```
+
+```{r}
+coef(elnetFitPsych4d$finalModel, elnetFitPsych4d$bestTune$lambda)
+plotVarSelection(elnetFitPsych4d, psychTrain4dX)
+```
+
+## Selection 6: Anxiety Predicting Eating Surveys
+
+Now let's see which of these variables are associated with our anxiety scale.
+
+```{r}
+# Select data
+psychTrain4X <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y5_PERFCT,
+    y5_AWARE,
+    y5_BULIM,
+    y5_DISTRST,
+    y5_INEFCT,
+    y5_FEARS,
+    contains("_eat_WORRYMR"),
+    contains("_eat_SADMR"),
+    contains("_eat_HAPPYMR"),
+    contains("_eat_BOREDMR"),
+    contains("_eat_REWARD"),
+    contains("_eat_MAD"),
+    -contains("y0"),
+    -contains("y2"),
+    -contains("y3")
+  )
+
+psychTrain4Y <-
+  lassoTrainingData %>% 
+  dplyr::select(y3_ANXR)
+```
+
+```{r, warning = FALSE}
+lassoFitPsych4 <- 
+  train(
+    psychTrain4X, 
+    psychTrain4Y$y3_ANXR, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych4 <-
+  train(
+    psychTrain4X, 
+    psychTrain4Y$y3_ANXR, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych4, elastic = elnetFitPsych4)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych4)
+getBestResult(elnetFitPsych4)
+```
+
+```{r}
+coef(lassoFitPsych4$finalModel, lassoFitPsych4$bestTune$lambda)
+plotVarSelection(lassoFitPsych4, psychTrain4X)
+```
+
+The variables most consistently selected across 3 - 6 are year 5 interoceptive awareness, year 5 ineffectiveness, and year 5 interpersonal distrust.
+
+
+## Selection 7: Assorted Psychological Variables Predicting BMI
+
+In this next step, we'll do sort of a grab bag of other psychological variables. What's left in this domain are the **Coping Strategies Inventory** and the **The Perceived Competence Scale for Children**.
+
+```{r}
+# Select data
+psychTrain7 <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y10_QI,
+    y4_CR1,
+    y6_CR1,
+    y8_CR1,
+    y4_EE1,
+    y6_EE1,
+    y8_EE1,
+    y4_SCRT1,
+    y6_SCRT1,
+    y8_SCRT1,
+    y5_SCHCP, 
+    y5_BEHCD, 
+    y5_SELWT
+  )
+
+psychTrain7X <- 
+  psychTrain7 %>% 
+  dplyr::select(-y10_QI)
+
+psychTrain7Y <-
+  psychTrain7 %>% 
+  dplyr::select(y10_QI)
+```
+
+```{r, warning = FALSE}
+lassoFitPsych7 <- 
+  train(
+    psychTrain7X, 
+    psychTrain7Y$y10_QI, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych7 <-
+  train(
+    psychTrain7X, 
+    psychTrain7Y$y10_QI, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych7, elastic = elnetFitPsych7)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych7)
+getBestResult(elnetFitPsych7)
+```
+
+```{r}
+coef(lassoFitPsych7$finalModel, lassoFitPsych7$bestTune$lambda)
+plotVarSelection(lassoFitPsych7, psychTrain7X)
+```
+
+
+## Selection 8: Income Predicting Assorted Psychological Variables
+
+```{r}
+# Select data
+psychTrain6 <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y0_CATINC,
+    y4_CR1,
+    y6_CR1,
+    y8_CR1,
+    y4_EE1,
+    y6_EE1,
+    y8_EE1,
+    y4_SCRT1,
+    y6_SCRT1,
+    y8_SCRT1,
+    y5_SCHCP, 
+    y5_BEHCD, 
+    y5_SELWT
+  )
+
+psychTrain6X <- 
+  psychTrain6 %>% 
+  dplyr::select(-y0_CATINC)
+
+psychTrain6Y <-
+  psychTrain6 %>% 
+  dplyr::select(y0_CATINC)
+```
+
+```{r warning = FALSE}
+lassoFitPsych6 <- 
+  train(
+    psychTrain6X, 
+    psychTrain6Y$y0_CATINC, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych6 <-
+  train(
+    psychTrain6X, 
+    psychTrain6Y$y0_CATINC, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych6, elastic = elnetFitPsych6)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych6)
+getBestResult(elnetFitPsych6)
+```
+
+```{r}
+coef(elnetFitPsych6$finalModel, elnetFitPsych6$bestTune$lambda)
+plotVarSelection(elnetFitPsych6, psychTrain6X)
+```
+
+
+## Selection 9: Stress Predicting Assorted Psychological Variables
+
+```{r}
+# Select data
+psychTrain8 <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y2_STRESS,
+    y4_CR1,
+    y6_CR1,
+    y8_CR1,
+    y2_EE1,
+    y4_EE1,
+    y6_EE1,
+    y8_EE1,
+    y4_SCRT1,
+    y6_SCRT1,
+    y8_SCRT1,
+    y5_SCHCP,  
+    y5_BEHCD, 
+    y5_SELWT
+  )
+
+psychTrain8X <- 
+  psychTrain8 %>% 
+  dplyr::select(-y2_STRESS)
+
+psychTrain8Y <-
+  psychTrain8 %>% 
+  dplyr::select(y2_STRESS)
+```
+
+```{r warning = FALSE}
+lassoFitPsych8 <- 
+  train(
+    psychTrain8X, 
+    psychTrain8Y$y2_STRESS, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych8 <-
+  train(
+    psychTrain8X, 
+    psychTrain8Y$y2_STRESS, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych8, elastic = elnetFitPsych8)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych8)
+getBestResult(elnetFitPsych8)
+```
+
+```{r}
+coef(elnetFitPsych8$finalModel, elnetFitPsych8$bestTune$lambda)
+plotVarSelection(elnetFitPsych8, psychTrain8X)
+```
+
+## Selection 10: Anxiety Predicting Assorted Psychological Variables
+
+```{r}
+# Select data
+psychTrain7 <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y3_ANXR,
+    y4_CR1,
+    y6_CR1,
+    y8_CR1,
+    y4_EE1,
+    y6_EE1,
+    y8_EE1,
+    y4_SCRT1,
+    y6_SCRT1,
+    y8_SCRT1,
+    y5_SCHCP, 
+    y5_BEHCD, 
+    y5_SELWT
+  )
+
+psychTrain7X <- 
+  psychTrain7 %>% 
+  dplyr::select(-y3_ANXR)
+
+psychTrain7Y <-
+  psychTrain7 %>% 
+  dplyr::select(y3_ANXR)
+```
+
+```{r warning = FALSE}
+lassoFitPsych7 <- 
+  train(
+    psychTrain7X, 
+    psychTrain7Y$y3_ANXR, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitPsych7 <-
+  train(
+    psychTrain7X, 
+    psychTrain7Y$y3_ANXR, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitPsych7, elastic = elnetFitPsych7)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitPsych7)
+getBestResult(elnetFitPsych7)
+```
+
+```{r}
+coef(elnetFitPsych7$finalModel, elnetFitPsych7$bestTune$lambda)
+plotVarSelection(elnetFitPsych7, psychTrain7X)
+```
+
+The variable most consistently selected across 7-10 was year 5 self-worth. Importantly, this was the only variable that was selected to predict year 10 BMI.
+
+
+## Selection 11: Health Behavior Predicting BMI
+
+```{r}
+# Select data
+behavTrain1 <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y10_QI,
+    y5_FSTFOOD4,
+    y7_FSTFOOD4,
+    y9_FSTFOOD4,
+    y5_FSTFOOD5,
+    y7_FSTFOOD5,
+    y9_FSTFOOD5,
+    y4_ALONE,
+    y5_ALONE,
+    y4_SECRET,
+    y5_SECRET,
+    y6_SECRET,
+    y7_SECRET,
+    y9_SECRET,
+    y4_EATTV,
+    y5_EATTV,
+    y6_EATTV,
+    y7_EATTV,
+    y9_EATTV,
+    y0_eat_VITAMINS:y9_eat_BOREDLS,
+    -contains("_eat_SECRET"),
+    -contains("_eat_ALONE"),
+    -contains("DIETLOS"),
+    -contains("LOSWT"),
+    -contains("WGHLS"),
+    -contains("WFAMLY"),
+    -contains("EATLESS"),
+    -contains("WGHMOR"),
+    -contains("BOREDLS"),
+    -contains("WGHLES"),
+    -contains("BOREDLS"),
+    -contains("SADLS"),
+    -contains("ASTOLD"),
+    -contains("BUYFMLY"),
+    -contains("NAG"),
+    -contains("PICKEAT"),
+    -contains("HAPPYLS"),
+    -contains("WORRYLS"),
+    -contains("CERTFOOD"),
+    -contains("GAINWT"),
+    -contains("ALLWNT"),
+    -contains("SCHLNCH"),
+    -contains("STOPEAT"),
+    -contains("BUYFMLY"),
+    -contains("SCHLNCH")
+    -contains("CERTFOOD"),
+    -contains("FRIENDS"),
+    -contains("FNSHPLT"),
+    -contains("SKIPLNCH"),
+    -contains("y9"),
+    -contains("y0"),
+    -contains("BREAKFST"),
+    -contains("PHYSACT"),
+    -contains("HOMEWRK"),
+    -contains("SPORTEAT"),
+    -contains("CRRYLNCH"),
+    -contains("FIXOWN"),
+    -contains("PARSNACK"),
+    -contains("BOREDMR"),
+    -contains("EATTV"),
+    -contains("VRHUNGY"),
+    -contains("DRINK")
+  ) %>% 
+  dplyr::select(
+    -ends_with("MR"),
+    -contains("eat_MAD"),
+    -contains("REWARD")
+  )
+
+behavTrain1x <- 
+  behavTrain1 %>% 
+  dplyr::select(-y10_QI, -contains("y0"), -contains("y2"), -contains("y3"))
+
+xfactors <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y5_AFTSNK,
+    y7_AFTSNK,
+    y9_AFTSNK,
+    y4_BREAKFST,
+    y5_BREAKFST,
+    y6_BREAKFST,
+    y7_BREAKFST,
+    y8_BREAKFST,
+    y9_BREAKFST,
+    y5_eat_STOPEAT
+  ) %>% 
+  mutate_all(as.factor)
+
+behavTrain1x <-
+  bind_cols(
+    behavTrain1x,
+    xfactors
+  )
+
+behavTrain1y <-
+  behavTrain1 %>% 
+  dplyr::select(y10_QI)
+
+behavTrain1 <-
+   bind_cols(
+    behavTrain1x,
+    behavTrain1y
+  )
+
+mm <- model.matrix(y10_QI ~ . - 1, behavTrain1)
+```
+
+```{r, warning = FALSE}
+lassoFitBehav1 <- 
+  train(
+    mm, 
+    behavTrain1y$y10_QI, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitBehav1 <-
+  train(
+    mm, 
+    behavTrain1y$y10_QI, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitBehav1, elastic = elnetFitBehav1)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitBehav1)
+getBestResult(elnetFitBehav1)
+```
+
+```{r}
+round(coef(elnetFitBehav1$finalModel, elnetFitBehav1$bestTune$lambda), 2)
+
+
+tmp_coeffs <- coef(elnetFitBehav1$finalModel, elnetFitBehav1$bestTune$lambda)
+
+coefs <- 
+  data.frame(name = tmp_coeffs@Dimnames[[1]][tmp_coeffs@i + 1], coefficient = tmp_coeffs@x)
+
+coefs %>%
+  filter(name != "(Intercept)") %>% 
+  ggplot(aes(fct_reorder(name, coefficient), coefficient)) +
+  geom_point() +
+  coord_flip()
+```
+
+
+## Selection 12: Income Predicting Health Behaviors
+
+```{r}
+# Select data
+behavTrain2 <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y0_CATINC,
+    y5_FSTFOOD4,
+    y7_FSTFOOD4,
+    y9_FSTFOOD4,
+    y5_FSTFOOD5,
+    y7_FSTFOOD5,
+    y9_FSTFOOD5,
+    y4_ALONE,
+    y5_ALONE,
+    y4_SECRET,
+    y5_SECRET,
+    y6_SECRET,
+    y7_SECRET,
+    y9_SECRET,
+    y4_EATTV,
+    y5_EATTV,
+    y6_EATTV,
+    y7_EATTV,
+    y9_EATTV,
+    y0_eat_VITAMINS:y9_eat_BOREDLS,
+    -contains("_eat_SECRET"),
+    -contains("_eat_ALONE"),    
+    -contains("DIETLOS"),
+    -contains("LOSWT"),
+    -contains("WGHLS"),
+    -contains("WFAMLY"),
+    -contains("EATLESS"),
+    -contains("WGHMOR"),
+    -contains("BOREDLS"),
+    -contains("WGHLES"),
+    -contains("BOREDLS"),
+    -contains("SADLS"),
+    -contains("ASTOLD"),
+    -contains("BUYFMLY"),
+    -contains("NAG"),
+    -contains("PICKEAT"),
+    -contains("HAPPYLS"),
+    -contains("WORRYLS"),
+    -contains("CERTFOOD"),
+    -contains("GAINWT"),
+    -contains("ALLWNT"),
+    -contains("SCHLNCH"),
+    -contains("STOPEAT"),
+    -contains("BUYFMLY"),
+    -contains("SCHLNCH")
+    -contains("CERTFOOD"),
+    -contains("FRIENDS"),
+    -contains("FNSHPLT"),
+    -contains("SKIPLNCH"),
+    -contains("y9"),
+    -contains("y0"),
+    -contains("BREAKFST"),
+    -contains("PHYSACT"),
+    -contains("HOMEWRK"),
+    -contains("SPORTEAT"),
+    -contains("CRRYLNCH"),
+    -contains("FIXOWN"),
+    -contains("PARSNACK"),
+    -contains("BOREDMR"),
+    -contains("EATTV"),
+    -contains("VRHUNGY"),
+    -contains("DRINK"),
+    -contains("DRINK")
+  ) %>% 
+  dplyr::select(
+    -ends_with("MR"),
+    -contains("eat_MAD"),
+    -contains("REWARD")
+  )
+
+
+behavTrain2x <- 
+  behavTrain2 %>% 
+  dplyr::select(-contains("y0"), -contains("y2"), -contains("y3")) 
+
+behavTrain2y <-
+  lassoTrainingData %>% 
+  dplyr::select(y0_CATINC)
+
+xfactors <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y5_AFTSNK,
+    y7_AFTSNK,
+    y9_AFTSNK,
+    y4_BREAKFST,
+    y5_BREAKFST,
+    y6_BREAKFST,
+    y7_BREAKFST,
+    y8_BREAKFST,
+    y9_BREAKFST,
+    y5_eat_STOPEAT
+  ) %>% 
+  mutate_all(as.factor)
+
+behavTrain2x <-
+  bind_cols(
+    behavTrain2x,
+    xfactors
+  )
+
+behavTrain2 <-
+   bind_cols(
+    behavTrain2x,
+    behavTrain2y
+  )
+
+mm <- model.matrix(y0_CATINC ~ . - 1, behavTrain2)
+```
+
+
+```{r, warning = FALSE}
+lassoFitBehav2 <- 
+  train(
+    mm, 
+    behavTrain2y$y0_CATINC, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitBehav2 <-
+  train(
+    mm, 
+    behavTrain2y$y0_CATINC, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitBehav2, elastic = elnetFitBehav2)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitBehav2)
+getBestResult(elnetFitBehav2)
+```
+
+```{r}
+coef(lassoFitBehav2$finalModel, lassoFitBehav2$bestTune$lambda)
+
+tmp_coeffs <- coef(lassoFitBehav2$finalModel, lassoFitBehav2$bestTune$lambda)
+
+coefs <- 
+  data.frame(name = tmp_coeffs@Dimnames[[1]][tmp_coeffs@i + 1], coefficient = tmp_coeffs@x)
+
+coefs %>%
+  filter(name != "(Intercept)") %>% 
+  ggplot(aes(fct_reorder(name, coefficient), coefficient)) +
+  geom_point() +
+  coord_flip()
+```
+
+## Selection 13: Anxiety Predicting Health Behaviors
+
+```{r}
+# Select data
+behavTrain4 <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y3_ANXR,
+    y5_FSTFOOD4,
+    y7_FSTFOOD4,
+    y9_FSTFOOD4,
+    y5_FSTFOOD5,
+    y7_FSTFOOD5,
+    y9_FSTFOOD5,
+    y4_ALONE,
+    y5_ALONE,
+    y4_SECRET,
+    y5_SECRET,
+    y6_SECRET,
+    y7_SECRET,
+    y9_SECRET,
+    y4_EATTV,
+    y5_EATTV,
+    y6_EATTV,
+    y7_EATTV,
+    y9_EATTV,
+    y0_eat_VITAMINS:y9_eat_BOREDLS,
+    -contains("_eat_SECRET"),
+    -contains("_eat_ALONE"),    
+    -contains("DIETLOS"),
+    -contains("LOSWT"),
+    -contains("WGHLS"),
+    -contains("WFAMLY"),
+    -contains("EATLESS"),
+    -contains("WGHMOR"),
+    -contains("BOREDLS"),
+    -contains("WGHLES"),
+    -contains("BOREDLS"),
+    -contains("SADLS"),
+    -contains("ASTOLD"),
+    -contains("BUYFMLY"),
+    -contains("NAG"),
+    -contains("PICKEAT"),
+    -contains("HAPPYLS"),
+    -contains("WORRYLS"),
+    -contains("CERTFOOD"),
+    -contains("GAINWT"),
+    -contains("ALLWNT"),
+    -contains("SCHLNCH"),
+    -contains("STOPEAT"),
+    -contains("BUYFMLY"),
+    -contains("SCHLNCH")
+    -contains("CERTFOOD"),
+    -contains("FRIENDS"),
+    -contains("FNSHPLT"),
+    -contains("SKIPLNCH"),
+    -contains("y9"),
+    -contains("y0"),
+    -contains("BREAKFST"),
+    -contains("PHYSACT"),
+    -contains("HOMEWRK"),
+    -contains("SPORTEAT"),
+    -contains("CRRYLNCH"),
+    -contains("FIXOWN"),
+    -contains("PARSNACK"),
+    -contains("BOREDMR"),
+    -contains("EATTV"),
+    -contains("VRHUNGY"),
+    -contains("DRINK")
+  ) %>% 
+  dplyr::select(
+    -ends_with("MR"),
+    -contains("eat_MAD"),
+    -contains("REWARD")
+  )
+
+behavTrain4x <- 
+  behavTrain4 %>% 
+  dplyr::select(-y3_ANXR, -contains("y0"), -contains("y2"), -contains("y3"))
+
+behavTrain4y <-
+  behavTrain4 %>% 
+  dplyr::select(y3_ANXR)
+
+xfactors <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y5_AFTSNK,
+    y7_AFTSNK,
+    y9_AFTSNK,
+    y4_BREAKFST,
+    y5_BREAKFST,
+    y6_BREAKFST,
+    y7_BREAKFST,
+    y8_BREAKFST,
+    y9_BREAKFST,
+    y5_eat_STOPEAT
+  ) %>% 
+  mutate_all(as.factor)
+
+behavTrain4x <-
+  bind_cols(
+    behavTrain4x,
+    xfactors
+  )
+
+behavTrain4 <-
+   bind_cols(
+    behavTrain4x,
+    behavTrain4y
+  )
+
+mm <- model.matrix(y3_ANXR ~ . - 1, behavTrain4)
+```
+
+```{r, warning = FALSE}
+lassoFitBehav4 <- 
+  train(
+    mm, 
+    behavTrain4y$y3_ANXR, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitBehav4 <-
+  train(
+    mm, 
+    behavTrain4y$y3_ANXR, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitBehav4, elastic = elnetFitBehav4)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitBehav4)
+getBestResult(elnetFitBehav4)
+```
+
+
+```{r}
+coef(elnetFitBehav4$finalModel, elnetFitBehav4$bestTune$lambda)
+
+tmp_coeffs <- coef(elnetFitBehav4$finalModel, elnetFitBehav4$bestTune$lambda)
+
+coefs <- 
+  data.frame(name = tmp_coeffs@Dimnames[[1]][tmp_coeffs@i + 1], coefficient = tmp_coeffs@x)
+
+coefs %>%
+  filter(name != "(Intercept)") %>% 
+  ggplot(aes(fct_reorder(name, coefficient), coefficient)) +
+  geom_point() +
+  coord_flip()
+```
+
+
+## Selection 14: Stress Predicting Health Behaviors
+
+```{r}
+# Select data
+behavTrain5 <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y2_STRESS,
+    y5_FSTFOOD4,
+    y7_FSTFOOD4,
+    y9_FSTFOOD4,
+    y5_FSTFOOD5,
+    y7_FSTFOOD5,
+    y9_FSTFOOD5,
+    y4_ALONE,
+    y5_ALONE,
+    y4_SECRET,
+    y5_SECRET,
+    y6_SECRET,
+    y7_SECRET,
+    y9_SECRET,
+    y4_EATTV,
+    y5_EATTV,
+    y6_EATTV,
+    y7_EATTV,
+    y9_EATTV,
+    y0_eat_VITAMINS:y9_eat_BOREDLS,
+    -contains("_eat_SECRET"),
+    -contains("_eat_ALONE"),    
+    -contains("DIETLOS"),
+    -contains("LOSWT"),
+    -contains("WGHLS"),
+    -contains("WFAMLY"),
+    -contains("EATLESS"),
+    -contains("WGHMOR"),
+    -contains("BOREDLS"),
+    -contains("WGHLES"),
+    -contains("BOREDLS"),
+    -contains("SADLS"),
+    -contains("ASTOLD"),
+    -contains("BUYFMLY"),
+    -contains("NAG"),
+    -contains("PICKEAT"),
+    -contains("HAPPYLS"),
+    -contains("WORRYLS"),
+    -contains("CERTFOOD"),
+    -contains("GAINWT"),
+    -contains("ALLWNT"),
+    -contains("SCHLNCH"),
+    -contains("STOPEAT"),
+    -contains("BUYFMLY"),
+    -contains("SCHLNCH")
+    -contains("CERTFOOD"),
+    -contains("FRIENDS"),
+    -contains("FNSHPLT"),
+    -contains("SKIPLNCH"),
+    -contains("y9"),
+    -contains("y0"),
+    -contains("BREAKFST"),
+    -contains("PHYSACT"),
+    -contains("HOMEWRK"),
+    -contains("SPORTEAT"),
+    -contains("CRRYLNCH"),
+    -contains("FIXOWN"),
+    -contains("PARSNACK"),
+    -contains("BOREDMR"),
+    -contains("EATTV"),
+    -contains("VRHUNGY"),
+    -contains("DRINK")
+  ) %>% 
+  dplyr::select(
+    -ends_with("MR"),
+    -contains("eat_MAD"),
+    -contains("REWARD")
+  )
+
+behavTrain5x <- 
+  behavTrain5 %>% 
+  dplyr::select(-y2_STRESS, -contains("y0"), -contains("y2"), -contains("y3")) 
+
+behavTrain5y <-
+  behavTrain5 %>% 
+  dplyr::select(y2_STRESS)
+
+xfactors <-
+  lassoTrainingData %>% 
+  dplyr::select(
+    y5_AFTSNK,
+    y7_AFTSNK,
+    y9_AFTSNK,
+    y4_BREAKFST,
+    y5_BREAKFST,
+    y6_BREAKFST,
+    y7_BREAKFST,
+    y8_BREAKFST,
+    y9_BREAKFST,
+    y5_eat_STOPEAT
+  ) %>% 
+  mutate_all(as.factor)
+
+behavTrain5x <-
+  bind_cols(
+    behavTrain5x,
+    xfactors
+  )
+
+behavTrain5 <-
+   bind_cols(
+    behavTrain5x,
+    behavTrain5y
+  )
+
+mm <- model.matrix(y2_STRESS ~ . - 1, behavTrain5)
+```
+
+```{r, warning = FALSE}
+lassoFitBehav5 <- 
+  train(
+    mm, 
+    behavTrain5y$y2_STRESS, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center'), 
+    tuneGrid = trainGrid
+  )
+
+elnetFitBehav5 <-
+  train(
+    mm, 
+    behavTrain5y$y2_STRESS, 
+    method = "glmnet", 
+    trControl = fitControl2, 
+    preProc = c('scale','center') 
+  )
+
+models <- list(lasso = lassoFitBehav5, elastic = elnetFitBehav5)
+resamples(models) %>% summary()
+
+getBestResult(lassoFitBehav5)
+getBestResult(elnetFitBehav5)
+```
+
+```{r}
+coef(lassoFitBehav5$finalModel, lassoFitBehav5$bestTune$lambda)
+
+tmp_coeffs <- coef(lassoFitBehav5$finalModel, lassoFitBehav5$bestTune$lambda)
+
+coefs <- 
+  data.frame(name = tmp_coeffs@Dimnames[[1]][tmp_coeffs@i + 1], coefficient = tmp_coeffs@x)
+
+coefs %>%
+  filter(name != "(Intercept)") %>% 
+  ggplot(aes(fct_reorder(name, coefficient), coefficient)) +
+  geom_point() +
+  coord_flip()
+```
+
+We don't see a ton of overlap between top predictors of BMI and eating behaviors predicted by affect. We select year 5 stop eat, year 6 snackfood, year 4 vitamins, and year 7 secret as these showed up in each of the two categories.

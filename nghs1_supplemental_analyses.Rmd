@@ -1,0 +1,381 @@
+---
+title: "NGHS1 Supplemental Analyses"
+author: "Daniel O'Leary"
+date: "April 15, 2019"
+output: 
+  github_document:
+    toc: true
+---
+
+# Setup
+
+## Load Packages
+```{r setup, include=FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, haven, broom, lavaan, mediation, lm.beta)
+```
+
+
+## Load Data
+
+```{r load data, warning = FALSE}
+semTrainingData <- 
+  read_csv("G:/My Drive/research/projects/phsr1/nghs1/nghs1_data/nghs1_sem_training_data.csv")
+
+semTestingData <- 
+  read_csv("G:/My Drive/research/projects/phsr1/nghs1/nghs1_data/nghs1_sem_testing_data.csv")
+
+semAllData <-
+  read_csv("G:/My Drive/research/projects/phsr1/nghs1/nghs1_data/nghs1_imputed_new2.csv") %>% 
+  mutate(y0_pbmi = (y0_WT_fm2 * 703) / (y0_HTFT_fm2 * 12 * y0_HTFT_fm2 * 12))
+
+```
+
+
+# Models
+
+```{r}
+cor.test(semAllData$y2_STRESS, semAllData$y3_ANXR)
+```
+
+
+## Income predicting weight gain
+
+```{r}
+income_bmi <-
+  lm(
+    y10_QI ~
+      y0_CATINC + y0_QI,
+    data = semAllData
+  )
+
+summary(income_bmi)
+
+lm.beta(income_bmi)
+```
+
+
+## Income predicting affect
+
+```{r}
+stress_inc <-
+  lm(
+    scale(y2_STRESS) ~
+      scale(y0_CATINC) +
+      y0_QI + y0_pbmi + y0_RACE,
+    data = semAllData
+  )
+
+summary(stress_inc)
+
+lm.beta(stress_inc)
+
+confint(stress_inc)
+
+
+anx_inc <-
+  lm(
+    scale(y3_ANXR) ~
+      scale(y0_CATINC) +
+      y0_QI + y0_pbmi + y0_RACE,
+    data = semAllData
+  )
+
+summary(anx_inc)
+
+lm.beta(anx_inc)
+
+confint(anx_inc)
+```
+
+
+## Affect predicting weight gain
+
+```{r}
+stress_bmi <-
+  lm(
+    y10_QI ~
+      y2_STRESS + y0_QI,
+    data = semAllData
+  )
+
+summary(stress_bmi)
+
+lm.beta(stress_bmi)
+
+
+anx_bmi <-
+  lm(
+    y10_QI ~
+      y3_ANXR + y0_QI,
+    data = semAllData
+  )
+
+summary(anx_bmi)
+
+lm.beta(anx_bmi)
+
+```
+
+
+## Psychological variables predicting weight gain
+
+```{r}
+edi_bmi1 <-
+  lm(
+    y10_QI ~
+      y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT,
+    data = semAllData
+  )
+
+summary(edi_bmi1)
+
+lm.beta(edi_bmi1)
+
+
+edi_bmi2 <-
+  lm(
+    y10_QI ~
+      y5_AWARE + y5_DISTRST + y5_INEFCT + y5_SELWT + y0_QI,
+    data = semAllData
+  )
+
+summary(edi_bmi2)
+
+lm.beta(edi_bmi2)
+```
+
+
+## Eating behavior variables predicting weight gain
+
+```{r}
+eat_bmi1 <-
+  lm(
+    y10_QI ~
+      y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y7_SECRET,
+    data = semAllData
+  )
+
+summary(eat_bmi1)
+
+lm.beta(eat_bmi1)
+
+
+eat_bmi2 <-
+  lm(
+    y10_QI ~
+      y6_eat_SNKFOOD2 + y5_eat_STOPEAT + y7_SECRET + y0_QI,
+    data = semAllData
+  )
+
+summary(eat_bmi2)
+
+lm.beta(eat_bmi2)
+```
+
+
+#  Mediation
+
+## Income --> Stress --> Weight
+
+```{r}
+lm1 <-
+  lm(
+    y2_STRESS ~
+      y0_CATINC,
+    data =
+      semAllData %>%
+      dplyr::select(y10_QI, y2_STRESS, y0_CATINC) %>%
+      distinct() %>%
+      filter(!is.na(y10_QI))
+  )
+
+summary(lm1)
+
+lm2 <-
+  lm(
+    y10_QI ~
+      y2_STRESS + y0_CATINC,
+    data =
+      semAllData %>%
+      dplyr::select(y10_QI, y2_STRESS, y0_CATINC) %>%
+      distinct() %>%
+      filter(!is.na(y10_QI))
+  )
+
+summary(lm2)
+
+
+med.output <- mediation::mediate(lm1, lm2, treat = "y0_CATINC", mediator = "y2_STRESS")
+
+summary(med.output)
+```
+
+
+## Income --> Anxiety --> Weight
+
+```{r}
+lm1 <-
+  lm(
+    y3_ANXR ~
+      y0_CATINC,
+    data =
+      semAllData %>%
+      dplyr::select(y10_QI, y3_ANXR, y0_CATINC) %>%
+      distinct() %>%
+      filter(!is.na(y10_QI))
+  )
+
+summary(lm1)
+
+lm2 <-
+  lm(
+    y10_QI ~
+      y3_ANXR + y0_CATINC,
+    data =
+      semAllData %>%
+      dplyr::select(y10_QI, y3_ANXR, y0_CATINC) %>%
+      distinct() %>%
+      filter(!is.na(y10_QI))
+  )
+
+summary(lm2)
+
+
+med.output <- mediation::mediate(lm1, lm2, treat = "y0_CATINC", mediator = "y3_ANXR")
+
+summary(med.output)
+```
+
+
+## Multiple mediation - stress & psychological variables
+
+```{r}
+data <-
+  data.frame(
+    X = semAllData$y0_CATINC,
+    X2 = semAllData$y0_QI,
+    X3 = semAllData$y0_RACE,
+    X4 = semAllData$y0_pbmi,
+    Y = semAllData$y10_QI,
+    M1 = semAllData$y2_STRESS,
+    M2 = semAllData$y5_AWARE,
+    M3 = semAllData$y5_INEFCT,
+    M4 = semAllData$y5_SELWT,
+    M5 = semAllData$y5_DISTRST
+  )
+
+model <- 
+  '
+    # direct effect
+      Y ~ b1 * M1 + b2 * M2 + b3 * M3 + b4 * M4 + b5* M5 + c * X + c2 * X2 + c3 * X3 + c4 * X4
+    
+    # mediator
+      M1 ~ a1 * X
+      M2 ~ a2 * X
+      M3 ~ a3 * X
+      M4 ~ a4 * X
+      M5 ~ a5 * X  
+    
+    
+    # direct effect
+      direct := c
+    
+    # indirect effect (a*b)
+      indirect1 := a1 * b1
+      indirect2 := a2 * b2
+      indirect3 := a3 * b3
+      indirect4 := a4 * b4
+      indirect5 := a5 * b5
+    
+    
+    # total effect
+      total := c + (a1 * b1) + (a2 * b2)  + (a3 * b3) + (a4 * b4) + (a5 * b5)
+      prop_mediated := (abs(indirect1) + abs(indirect2) + abs(indirect3) + abs(indirect4) + abs(indirect5) )/abs(total)
+    
+    # covariances
+    
+      M1 ~~ M2 + M3 + M4 + M5
+      M2 ~~ M3 + M4 + M5
+
+'
+fit <- 
+  sem(
+    model, 
+    data = data
+  )
+
+summary(
+  fit, 
+  standardized = TRUE, 
+  fit.measures = T, 
+  rsq = T
+)
+```
+
+
+## Multiple mediation - anxiety & psychological variables
+
+```{r}
+data <-
+  data.frame(
+    X = semAllData$y0_CATINC,
+    X2 = semAllData$y0_QI,
+    X3 = semAllData$y0_RACE,
+    X4 = semAllData$y0_pbmi,
+    Y = semAllData$y10_QI,
+    M1 = semAllData$y3_ANXR,
+    M2 = semAllData$y5_AWARE,
+    M3 = semAllData$y5_INEFCT,
+    M4 = semAllData$y5_SELWT,
+    M5 = semAllData$y5_DISTRST
+  )
+
+model <- 
+  '
+    # direct effect
+      Y ~ b1 * M1 + b2 * M2 + b3 * M3 + b4 * M4 + b5* M5 + c * X + c2 * X2 + c3 * X3 + c4 * X4
+    
+    # mediator
+      M1 ~ a1 * X
+      M2 ~ a2 * X
+      M3 ~ a3 * X
+      M4 ~ a4 * X
+      M5 ~ a5 * X  
+    
+    
+    # direct effect
+      direct := c
+    
+    # indirect effect (a*b)
+      indirect1 := a1 * b1
+      indirect2 := a2 * b2
+      indirect3 := a3 * b3
+      indirect4 := a4 * b4
+      indirect5 := a5 * b5
+    
+    
+    # total effect
+      total := c + (a1 * b1) + (a2 * b2)  + (a3 * b3) + (a4 * b4) + (a5 * b5)
+      prop_mediated := (abs(indirect1) + abs(indirect2) + abs(indirect3) + abs(indirect4) + abs(indirect5) )/abs(total)
+    
+    # covariances
+    
+      M1 ~~ M2 + M3 + M4 + M5
+      M2 ~~ M3 + M4 + M5
+
+'
+fit <- 
+  sem(
+    model, 
+    data = data
+  )
+
+summary(
+  fit, 
+  standardized = TRUE, 
+  fit.measures = T, 
+  rsq = T
+)
+```
+
