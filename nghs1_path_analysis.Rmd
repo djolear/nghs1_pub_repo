@@ -104,7 +104,7 @@ summary(
 ## Stress Psych Pruned Model
 
 ```{r}
-mod_pysch_stress_pruned <-
+mod_psych_stress_pruned <-
   '
     ######################
     ## Latent Variables ##
@@ -150,7 +150,7 @@ mod_pysch_stress_pruned <-
 
 fit_psych_stress_pruned <- 
   sem(
-    mod_pysch_stress_pruned, 
+    mod_psych_stress_pruned, 
     data = semTestingData, 
     estimator = "MLM"
   )
@@ -167,7 +167,7 @@ summary(
 
 ```{r}
 standardizedSolution(
-  fit_pysch_stress_pruned,
+  fit_psych_stress_pruned,
   type = "std.all",
   se = TRUE,
   zstat = TRUE,
@@ -189,15 +189,15 @@ standardizedSolution(
 ## Stress Psych Pruned Model - All Data
 
 ```{r}
-fit_pysch_stress_pruned_ad <-
+fit_psych_stress_pruned_ad <-
   sem(
-    mod_pysch_stress_pruned, 
+    mod_psych_stress_pruned, 
     data = semAllData, 
     estimator = "MLM"
   )
 
 summary(
-  fit_pysch_stress_pruned_ad, 
+  fit_psych_stress_pruned_ad, 
   standardized = TRUE, 
   fit.measures = TRUE
 )
