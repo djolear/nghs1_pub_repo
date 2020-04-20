@@ -324,7 +324,7 @@ data <-
     X3 = semAllData$y0_RACE,
     X4 = semAllData$y0_pbmi,
     Y = semAllData$y10_QI,
-    M1 = semAllData$y3_ANXR,
+    M1 = semAllData$y2_STRESS,
     M2 = semAllData$y5_AWARE,
     M3 = semAllData$y5_INEFCT,
     M4 = semAllData$y5_SELWT,
