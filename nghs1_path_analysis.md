@@ -1,41 +1,47 @@
 NGHS1 Path Analysis
 ================
-Daniel O'Leary
+Daniel O’Leary
 November 14, 2018
 
--   [Setup](#setup)
-    -   [Load Packages](#load-packages)
-    -   [Load Data](#load-data)
-    -   [Check Dimensions](#check-dimensions)
--   [Path Models](#path-models)
-    -   [Stress Psych Initial Model](#stress-psych-initial-model)
-    -   [Stress Psych Pruned Model](#stress-psych-pruned-model)
-    -   [Stress Psych Pruned Model - Parameter Export](#stress-psych-pruned-model---parameter-export)
-    -   [Stress Psych Pruned Model - All Data](#stress-psych-pruned-model---all-data)
--   [Anxiety Psych](#anxiety-psych)
-    -   [Anxiety Psych Initial Model](#anxiety-psych-initial-model)
-    -   [Anxiety Psych Pruned Model](#anxiety-psych-pruned-model)
-    -   [Anxiety Psych Pruned Model - Parameter Export](#anxiety-psych-pruned-model---parameter-export)
-    -   [Anxiety Psych Pruned Model - All Data](#anxiety-psych-pruned-model---all-data)
--   [Stress Behavior](#stress-behavior)
-    -   [Stress Behavior Initial Model](#stress-behavior-initial-model)
-    -   [Stress Behavior Pruned Model](#stress-behavior-pruned-model)
-    -   [Stress Behavior Pruned Model - Parameter Export](#stress-behavior-pruned-model---parameter-export)
-    -   [Stress Behavior Pruned Model - All Data](#stress-behavior-pruned-model---all-data)
--   [Anxiety Behavior](#anxiety-behavior)
-    -   [Anxiety Behavior Initial Model](#anxiety-behavior-initial-model)
-    -   [Anxiety Behavior Pruned Model](#anxiety-behavior-pruned-model)
-    -   [Anxiety Behavior Pruned Model - Parameter Export](#anxiety-behavior-pruned-model---parameter-export)
-    -   [Anxiety Behavior Pruned Model - All Data](#anxiety-behavior-pruned-model---all-data)
+  - [Setup](#setup)
+      - [Load Packages](#load-packages)
+      - [Load Data](#load-data)
+      - [Check Dimensions](#check-dimensions)
+  - [Path Models](#path-models)
+      - [Stress Psych Initial Model](#stress-psych-initial-model)
+      - [Stress Psych Pruned Model](#stress-psych-pruned-model)
+      - [Stress Psych Pruned Model - Parameter
+        Export](#stress-psych-pruned-model---parameter-export)
+      - [Stress Psych Pruned Model - All
+        Data](#stress-psych-pruned-model---all-data)
+  - [Anxiety Psych](#anxiety-psych)
+      - [Anxiety Psych Initial Model](#anxiety-psych-initial-model)
+      - [Anxiety Psych Pruned Model](#anxiety-psych-pruned-model)
+      - [Anxiety Psych Pruned Model - Parameter
+        Export](#anxiety-psych-pruned-model---parameter-export)
+      - [Anxiety Psych Pruned Model - All
+        Data](#anxiety-psych-pruned-model---all-data)
+  - [Stress Behavior](#stress-behavior)
+      - [Stress Behavior Initial Model](#stress-behavior-initial-model)
+      - [Stress Behavior Pruned Model](#stress-behavior-pruned-model)
+      - [Stress Behavior Pruned Model - Parameter
+        Export](#stress-behavior-pruned-model---parameter-export)
+      - [Stress Behavior Pruned Model - All
+        Data](#stress-behavior-pruned-model---all-data)
+  - [Anxiety Behavior](#anxiety-behavior)
+      - [Anxiety Behavior Initial
+        Model](#anxiety-behavior-initial-model)
+      - [Anxiety Behavior Pruned Model](#anxiety-behavior-pruned-model)
+      - [Anxiety Behavior Pruned Model - Parameter
+        Export](#anxiety-behavior-pruned-model---parameter-export)
+      - [Anxiety Behavior Pruned Model - All
+        Data](#anxiety-behavior-pruned-model---all-data)
 
-Setup
-=====
+# Setup
 
-Load Packages
--------------
+## Load Packages
 
-Load Data
----------
+## Load Data
 
 ``` r
 semTrainingData <- 
@@ -72,8 +78,7 @@ semAllData <-
     ## )
     ## See spec(...) for full column specifications.
 
-Check Dimensions
-----------------
+## Check Dimensions
 
 ``` r
 dim(semTrainingData)
@@ -87,19 +92,17 @@ dim(semTestingData)
 
     ## [1]  793 1628
 
-Path Models
-===========
+# Path Models
 
 Good fit for models:
 
--   Chi-square p-val &gt; 0.05 \[not necc. w/ large sample size\]
--   TLI &gt;= 0.95
--   CFI &gt;= 0.90
--   RMSEA &lt; 0.08
--   SRMR &lt; 0.08
+  - Chi-square p-val \> 0.05 \[not necc. w/ large sample size\]
+  - TLI \>= 0.95
+  - CFI \>= 0.90
+  - RMSEA \< 0.08
+  - SRMR \< 0.08
 
-Stress Psych Initial Model
---------------------------
+## Stress Psych Initial Model
 
 ``` r
 mod_psych_stress_initial <-
@@ -149,31 +152,31 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 159 iterations
+    ## lavaan 0.6-5 ended normally after 159 iterations
     ## 
+    ##   Estimator                                         ML
     ##   Optimization method                           NLMINB
     ##   Number of free parameters                         54
-    ## 
+    ##                                                       
     ##   Number of observations                           793
-    ## 
-    ##   Estimator                                         ML      Robust
-    ##   Model Fit Test Statistic                       0.000       0.000
+    ##                                                       
+    ## Model Test User Model:
+    ##                                               Standard      Robust
+    ##   Test Statistic                                 0.000       0.000
     ##   Degrees of freedom                                 0           0
-    ##   Minimum Function Value               0.0000000000000
-    ##   Scaling correction factor                                     NA
-    ##     for the Satorra-Bentler correction
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic             2020.749    1590.195
+    ##   Test statistic                              2020.749    1590.195
     ##   Degrees of freedom                                45          45
     ##   P-value                                        0.000       0.000
+    ##   Scaling correction factor                                  1.271
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    1.000       1.000
     ##   Tucker-Lewis Index (TLI)                       1.000       1.000
-    ## 
+    ##                                                                   
     ##   Robust Comparative Fit Index (CFI)                            NA
     ##   Robust Tucker-Lewis Index (TLI)                               NA
     ## 
@@ -181,8 +184,7 @@ summary(
     ## 
     ##   Loglikelihood user model (H0)             -17483.046  -17483.046
     ##   Loglikelihood unrestricted model (H1)     -17483.046  -17483.046
-    ## 
-    ##   Number of free parameters                         54          54
+    ##                                                                   
     ##   Akaike (AIC)                               35074.092   35074.092
     ##   Bayesian (BIC)                             35326.586   35326.586
     ##   Sample-size adjusted Bayesian (BIC)        35155.107   35155.107
@@ -190,11 +192,13 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.000       0.000
-    ##   90 Percent Confidence Interval          0.000  0.000       0.000  0.000
+    ##   90 Percent confidence interval - lower         0.000       0.000
+    ##   90 Percent confidence interval - upper         0.000       0.000
     ##   P-value RMSEA <= 0.05                             NA          NA
-    ## 
+    ##                                                                   
     ##   Robust RMSEA                                               0.000
-    ##   90 Percent Confidence Interval                             0.000  0.000
+    ##   90 Percent confidence interval - lower                     0.000
+    ##   90 Percent confidence interval - upper                     0.000
     ## 
     ## Standardized Root Mean Square Residual:
     ## 
@@ -204,7 +208,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model          Structured
-    ##   Standard Errors                           Robust.sem
+    ##   Standard errors                           Robust.sem
     ## 
     ## Regressions:
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -286,8 +290,7 @@ summary(
     ##    .y0_pbmi          47.862    4.660   10.271    0.000   47.862    0.955
     ##    .y0_CATINC         1.058    0.043   24.364    0.000    1.058    0.894
 
-Stress Psych Pruned Model
--------------------------
+## Stress Psych Pruned Model
 
 ``` r
 mod_psych_stress_pruned <-
@@ -343,35 +346,39 @@ fit_psych_stress_pruned <-
 summary(
   fit_psych_stress_pruned, 
   standardized = TRUE, 
-  fit.measures = TRUE
+  fit.measures = TRUE,
+  rsq = TRUE
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 143 iterations
+    ## lavaan 0.6-5 ended normally after 143 iterations
     ## 
+    ##   Estimator                                         ML
     ##   Optimization method                           NLMINB
     ##   Number of free parameters                         49
-    ## 
+    ##                                                       
     ##   Number of observations                           793
-    ## 
-    ##   Estimator                                         ML      Robust
-    ##   Model Fit Test Statistic                       6.243       5.675
+    ##                                                       
+    ## Model Test User Model:
+    ##                                               Standard      Robust
+    ##   Test Statistic                                 6.243       5.675
     ##   Degrees of freedom                                 5           5
     ##   P-value (Chi-square)                           0.283       0.339
     ##   Scaling correction factor                                  1.100
-    ##     for the Satorra-Bentler correction
+    ##     for the Satorra-Bentler correction 
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic             2117.043    1665.443
+    ##   Test statistic                              2117.043    1665.443
     ##   Degrees of freedom                                45          45
     ##   P-value                                        0.000       0.000
+    ##   Scaling correction factor                                  1.271
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    0.999       1.000
     ##   Tucker-Lewis Index (TLI)                       0.995       0.996
-    ## 
+    ##                                                                   
     ##   Robust Comparative Fit Index (CFI)                         1.000
     ##   Robust Tucker-Lewis Index (TLI)                            0.997
     ## 
@@ -379,8 +386,7 @@ summary(
     ## 
     ##   Loglikelihood user model (H0)             -17743.813  -17743.813
     ##   Loglikelihood unrestricted model (H1)     -17740.692  -17740.692
-    ## 
-    ##   Number of free parameters                         49          49
+    ##                                                                   
     ##   Akaike (AIC)                               35585.626   35585.626
     ##   Bayesian (BIC)                             35814.741   35814.741
     ##   Sample-size adjusted Bayesian (BIC)        35659.140   35659.140
@@ -388,11 +394,13 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.018       0.013
-    ##   90 Percent Confidence Interval          0.000  0.055       0.000  0.051
+    ##   90 Percent confidence interval - lower         0.000       0.000
+    ##   90 Percent confidence interval - upper         0.055       0.051
     ##   P-value RMSEA <= 0.05                          0.916       0.945
-    ## 
+    ##                                                                   
     ##   Robust RMSEA                                               0.014
-    ##   90 Percent Confidence Interval                             0.000  0.055
+    ##   90 Percent confidence interval - lower                     0.000
+    ##   90 Percent confidence interval - upper                     0.055
     ## 
     ## Standardized Root Mean Square Residual:
     ## 
@@ -402,7 +410,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model          Structured
-    ##   Standard Errors                           Robust.sem
+    ##   Standard errors                           Robust.sem
     ## 
     ## Regressions:
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -484,9 +492,20 @@ summary(
     ##    .y0_QI            14.079    0.870   16.186    0.000   14.079    0.899
     ##    .y0_pbmi          46.404    4.188   11.080    0.000   46.404    0.954
     ##    .y0_CATINC         1.102    0.043   25.847    0.000    1.102    0.916
+    ## 
+    ## R-Square:
+    ##                    Estimate
+    ##     y10_QI            0.665
+    ##     y5_AWARE          0.084
+    ##     y5_DISTRST        0.104
+    ##     y5_INEFCT         0.102
+    ##     y5_SELWT          0.097
+    ##     y2_STRESS         0.027
+    ##     y0_QI             0.101
+    ##     y0_pbmi           0.046
+    ##     y0_CATINC         0.084
 
-Stress Psych Pruned Model - Parameter Export
---------------------------------------------
+## Stress Psych Pruned Model - Parameter Export
 
 ``` r
 standardizedSolution(
@@ -508,8 +527,7 @@ standardizedSolution(
   )
 ```
 
-Stress Psych Pruned Model - All Data
-------------------------------------
+## Stress Psych Pruned Model - All Data
 
 ``` r
 fit_psych_stress_pruned_ad <-
@@ -526,31 +544,34 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 146 iterations
+    ## lavaan 0.6-5 ended normally after 146 iterations
     ## 
+    ##   Estimator                                         ML
     ##   Optimization method                           NLMINB
     ##   Number of free parameters                         49
-    ## 
+    ##                                                       
     ##   Number of observations                          2379
-    ## 
-    ##   Estimator                                         ML      Robust
-    ##   Model Fit Test Statistic                       3.517       3.298
+    ##                                                       
+    ## Model Test User Model:
+    ##                                               Standard      Robust
+    ##   Test Statistic                                 3.517       3.298
     ##   Degrees of freedom                                 5           5
     ##   P-value (Chi-square)                           0.621       0.654
     ##   Scaling correction factor                                  1.067
-    ##     for the Satorra-Bentler correction
+    ##     for the Satorra-Bentler correction 
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic             6012.148    4786.830
+    ##   Test statistic                              6012.148    4786.830
     ##   Degrees of freedom                                45          45
     ##   P-value                                        0.000       0.000
+    ##   Scaling correction factor                                  1.256
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    1.000       1.000
     ##   Tucker-Lewis Index (TLI)                       1.002       1.003
-    ## 
+    ##                                                                   
     ##   Robust Comparative Fit Index (CFI)                         1.000
     ##   Robust Tucker-Lewis Index (TLI)                            1.003
     ## 
@@ -558,8 +579,7 @@ summary(
     ## 
     ##   Loglikelihood user model (H0)             -53072.867  -53072.867
     ##   Loglikelihood unrestricted model (H1)     -53071.109  -53071.109
-    ## 
-    ##   Number of free parameters                         49          49
+    ##                                                                   
     ##   Akaike (AIC)                              106243.734  106243.734
     ##   Bayesian (BIC)                            106526.682  106526.682
     ##   Sample-size adjusted Bayesian (BIC)       106370.998  106370.998
@@ -567,11 +587,13 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.000       0.000
-    ##   90 Percent Confidence Interval          0.000  0.024       0.000  0.022
+    ##   90 Percent confidence interval - lower         0.000       0.000
+    ##   90 Percent confidence interval - upper         0.024       0.022
     ##   P-value RMSEA <= 0.05                          1.000       1.000
-    ## 
+    ##                                                                   
     ##   Robust RMSEA                                               0.000
-    ##   90 Percent Confidence Interval                             0.000  0.024
+    ##   90 Percent confidence interval - lower                     0.000
+    ##   90 Percent confidence interval - upper                     0.024
     ## 
     ## Standardized Root Mean Square Residual:
     ## 
@@ -581,7 +603,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model          Structured
-    ##   Standard Errors                           Robust.sem
+    ##   Standard errors                           Robust.sem
     ## 
     ## Regressions:
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -664,11 +686,9 @@ summary(
     ##    .y0_pbmi          44.981    2.313   19.444    0.000   44.981    0.957
     ##    .y0_CATINC         1.090    0.025   44.306    0.000    1.090    0.894
 
-Anxiety Psych
-=============
+# Anxiety Psych
 
-Anxiety Psych Initial Model
----------------------------
+## Anxiety Psych Initial Model
 
 ``` r
 mod_psych_anx_initial <-
@@ -716,31 +736,31 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 147 iterations
+    ## lavaan 0.6-5 ended normally after 147 iterations
     ## 
+    ##   Estimator                                         ML
     ##   Optimization method                           NLMINB
     ##   Number of free parameters                         54
-    ## 
+    ##                                                       
     ##   Number of observations                           793
-    ## 
-    ##   Estimator                                         ML      Robust
-    ##   Model Fit Test Statistic                       0.000       0.000
+    ##                                                       
+    ## Model Test User Model:
+    ##                                               Standard      Robust
+    ##   Test Statistic                                 0.000       0.000
     ##   Degrees of freedom                                 0           0
-    ##   Minimum Function Value               0.0000000000000
-    ##   Scaling correction factor                                     NA
-    ##     for the Satorra-Bentler correction
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic             2194.294    1712.958
+    ##   Test statistic                              2194.294    1712.958
     ##   Degrees of freedom                                45          45
     ##   P-value                                        0.000       0.000
+    ##   Scaling correction factor                                  1.281
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    1.000       1.000
     ##   Tucker-Lewis Index (TLI)                       1.000       1.000
-    ## 
+    ##                                                                   
     ##   Robust Comparative Fit Index (CFI)                            NA
     ##   Robust Tucker-Lewis Index (TLI)                               NA
     ## 
@@ -748,8 +768,7 @@ summary(
     ## 
     ##   Loglikelihood user model (H0)             -17362.597  -17362.597
     ##   Loglikelihood unrestricted model (H1)     -17362.597  -17362.597
-    ## 
-    ##   Number of free parameters                         54          54
+    ##                                                                   
     ##   Akaike (AIC)                               34833.193   34833.193
     ##   Bayesian (BIC)                             35085.688   35085.688
     ##   Sample-size adjusted Bayesian (BIC)        34914.209   34914.209
@@ -757,11 +776,13 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.000       0.000
-    ##   90 Percent Confidence Interval          0.000  0.000       0.000  0.000
+    ##   90 Percent confidence interval - lower         0.000       0.000
+    ##   90 Percent confidence interval - upper         0.000       0.000
     ##   P-value RMSEA <= 0.05                             NA          NA
-    ## 
+    ##                                                                   
     ##   Robust RMSEA                                               0.000
-    ##   90 Percent Confidence Interval                             0.000  0.000
+    ##   90 Percent confidence interval - lower                     0.000
+    ##   90 Percent confidence interval - upper                     0.000
     ## 
     ## Standardized Root Mean Square Residual:
     ## 
@@ -771,7 +792,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model          Structured
-    ##   Standard Errors                           Robust.sem
+    ##   Standard errors                           Robust.sem
     ## 
     ## Regressions:
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -853,8 +874,7 @@ summary(
     ##    .y0_pbmi          47.862    4.660   10.271    0.000   47.862    0.955
     ##    .y0_CATINC         1.058    0.043   24.364    0.000    1.058    0.894
 
-Anxiety Psych Pruned Model
---------------------------
+## Anxiety Psych Pruned Model
 
 ``` r
 mod_psych_anx_pruned <-
@@ -909,35 +929,39 @@ fit_psych_anx_pruned <-
 summary(
   fit_psych_anx_pruned, 
   standardized = TRUE, 
-  fit.measures = TRUE
+  fit.measures = TRUE,
+  rsq = TRUE
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 125 iterations
+    ## lavaan 0.6-5 ended normally after 125 iterations
     ## 
+    ##   Estimator                                         ML
     ##   Optimization method                           NLMINB
     ##   Number of free parameters                         49
-    ## 
+    ##                                                       
     ##   Number of observations                           793
-    ## 
-    ##   Estimator                                         ML      Robust
-    ##   Model Fit Test Statistic                      10.113       9.453
+    ##                                                       
+    ## Model Test User Model:
+    ##                                               Standard      Robust
+    ##   Test Statistic                                10.113       9.453
     ##   Degrees of freedom                                 6           6
     ##   P-value (Chi-square)                           0.120       0.150
     ##   Scaling correction factor                                  1.070
-    ##     for the Satorra-Bentler correction
+    ##     for the Satorra-Bentler correction 
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic             2259.067    1799.403
+    ##   Test statistic                              2259.067    1799.403
     ##   Degrees of freedom                                45          45
     ##   P-value                                        0.000       0.000
+    ##   Scaling correction factor                                  1.255
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    0.998       0.998
     ##   Tucker-Lewis Index (TLI)                       0.986       0.985
-    ## 
+    ##                                                                   
     ##   Robust Comparative Fit Index (CFI)                         0.998
     ##   Robust Tucker-Lewis Index (TLI)                            0.987
     ## 
@@ -945,8 +969,7 @@ summary(
     ## 
     ##   Loglikelihood user model (H0)             -18198.080  -18198.080
     ##   Loglikelihood unrestricted model (H1)     -18193.023  -18193.023
-    ## 
-    ##   Number of free parameters                         49          49
+    ##                                                                   
     ##   Akaike (AIC)                               36494.159   36494.159
     ##   Bayesian (BIC)                             36723.275   36723.275
     ##   Sample-size adjusted Bayesian (BIC)        36567.674   36567.674
@@ -954,11 +977,13 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.029       0.027
-    ##   90 Percent Confidence Interval          0.000  0.060       0.000  0.057
+    ##   90 Percent confidence interval - lower         0.000       0.000
+    ##   90 Percent confidence interval - upper         0.060       0.057
     ##   P-value RMSEA <= 0.05                          0.850       0.885
-    ## 
+    ##                                                                   
     ##   Robust RMSEA                                               0.028
-    ##   90 Percent Confidence Interval                             0.000  0.060
+    ##   90 Percent confidence interval - lower                     0.000
+    ##   90 Percent confidence interval - upper                     0.060
     ## 
     ## Standardized Root Mean Square Residual:
     ## 
@@ -968,7 +993,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model          Structured
-    ##   Standard Errors                           Robust.sem
+    ##   Standard errors                           Robust.sem
     ## 
     ## Regressions:
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -1054,9 +1079,20 @@ summary(
     ##    .y0_pbmi          46.404    4.188   11.080    0.000   46.404    0.954
     ##    .y0_CATINC         1.102    0.043   25.847    0.000    1.102    0.916
     ##     y0_RACE           0.249    0.001  285.950    0.000    0.249    1.000
+    ## 
+    ## R-Square:
+    ##                    Estimate
+    ##     y10_QI            0.664
+    ##     y5_AWARE          0.180
+    ##     y5_DISTRST        0.144
+    ##     y5_INEFCT         0.161
+    ##     y5_SELWT          0.186
+    ##     y3_ANXR           0.027
+    ##     y0_QI             0.101
+    ##     y0_pbmi           0.046
+    ##     y0_CATINC         0.084
 
-Anxiety Psych Pruned Model - Parameter Export
----------------------------------------------
+## Anxiety Psych Pruned Model - Parameter Export
 
 ``` r
 standardizedSolution(
@@ -1078,8 +1114,7 @@ standardizedSolution(
   )
 ```
 
-Anxiety Psych Pruned Model - All Data
--------------------------------------
+## Anxiety Psych Pruned Model - All Data
 
 ``` r
 fit_psych_anx_pruned_ad <-
@@ -1097,31 +1132,34 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 128 iterations
+    ## lavaan 0.6-5 ended normally after 128 iterations
     ## 
+    ##   Estimator                                         ML
     ##   Optimization method                           NLMINB
     ##   Number of free parameters                         49
-    ## 
+    ##                                                       
     ##   Number of observations                          2379
-    ## 
-    ##   Estimator                                         ML      Robust
-    ##   Model Fit Test Statistic                       8.264       7.916
+    ##                                                       
+    ## Model Test User Model:
+    ##                                               Standard      Robust
+    ##   Test Statistic                                 8.264       7.916
     ##   Degrees of freedom                                 6           6
     ##   P-value (Chi-square)                           0.219       0.244
     ##   Scaling correction factor                                  1.044
-    ##     for the Satorra-Bentler correction
+    ##     for the Satorra-Bentler correction 
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic             6472.018    5157.046
+    ##   Test statistic                              6472.018    5157.046
     ##   Degrees of freedom                                45          45
     ##   P-value                                        0.000       0.000
+    ##   Scaling correction factor                                  1.255
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    1.000       1.000
     ##   Tucker-Lewis Index (TLI)                       0.997       0.997
-    ## 
+    ##                                                                   
     ##   Robust Comparative Fit Index (CFI)                         1.000
     ##   Robust Tucker-Lewis Index (TLI)                            0.998
     ## 
@@ -1129,8 +1167,7 @@ summary(
     ## 
     ##   Loglikelihood user model (H0)             -54433.855  -54433.855
     ##   Loglikelihood unrestricted model (H1)     -54429.723  -54429.723
-    ## 
-    ##   Number of free parameters                         49          49
+    ##                                                                   
     ##   Akaike (AIC)                              108965.711  108965.711
     ##   Bayesian (BIC)                            109248.658  109248.658
     ##   Sample-size adjusted Bayesian (BIC)       109092.975  109092.975
@@ -1138,11 +1175,13 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.013       0.012
-    ##   90 Percent Confidence Interval          0.000  0.031       0.000  0.030
+    ##   90 Percent confidence interval - lower         0.000       0.000
+    ##   90 Percent confidence interval - upper         0.031       0.030
     ##   P-value RMSEA <= 0.05                          1.000       1.000
-    ## 
+    ##                                                                   
     ##   Robust RMSEA                                               0.012
-    ##   90 Percent Confidence Interval                             0.000  0.031
+    ##   90 Percent confidence interval - lower                     0.000
+    ##   90 Percent confidence interval - upper                     0.031
     ## 
     ## Standardized Root Mean Square Residual:
     ## 
@@ -1152,7 +1191,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model          Structured
-    ##   Standard Errors                           Robust.sem
+    ##   Standard errors                           Robust.sem
     ## 
     ## Regressions:
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -1251,11 +1290,9 @@ summary(
     ##     y0_pbmi           0.043
     ##     y0_CATINC         0.106
 
-Stress Behavior
-===============
+# Stress Behavior
 
-Stress Behavior Initial Model
------------------------------
+## Stress Behavior Initial Model
 
 ``` r
 mod_behav_stress_initial <-
@@ -1296,13 +1333,7 @@ fit_behav_stress_initial <-
     estimator = "DWLS", 
     ordered = c("y5_eat_STOPEAT")
   )
-```
 
-    ## Warning in lavaan::lavaan(model = mod_behav_stress_initial, data = semTestingData %>% : lavaan WARNING: not all elements of the gradient are (near) zero;
-    ##                   the optimizer may not have found a local solution;
-    ##                   use lavInspect(fit, "optim.gradient") to investigate
-
-``` r
 summary(
   fit_behav_stress_initial, 
   standardized = TRUE, 
@@ -1310,25 +1341,26 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 190 iterations
-    ## 
-    ##   Optimization method                           NLMINB
-    ##   Number of free parameters                         62
-    ## 
-    ##   Number of observations                           793
+    ## lavaan 0.6-5 ended normally after 190 iterations
     ## 
     ##   Estimator                                       DWLS
-    ##   Model Fit Test Statistic                       0.000
+    ##   Optimization method                           NLMINB
+    ##   Number of free parameters                         62
+    ##                                                       
+    ##   Number of observations                           793
+    ##                                                       
+    ## Model Test User Model:
+    ##                                                       
+    ##   Test statistic                                 0.000
     ##   Degrees of freedom                                 0
-    ##   Minimum Function Value               0.0000000000000
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic              880.175
+    ##   Test statistic                               880.175
     ##   Degrees of freedom                                36
     ##   P-value                                        0.000
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    1.000
     ##   Tucker-Lewis Index (TLI)                       1.000
@@ -1336,7 +1368,8 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.000
-    ##   90 Percent Confidence Interval          0.000  0.000
+    ##   90 Percent confidence interval - lower         0.000
+    ##   90 Percent confidence interval - upper         0.000
     ##   P-value RMSEA <= 0.05                             NA
     ## 
     ## Standardized Root Mean Square Residual:
@@ -1347,7 +1380,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model        Unstructured
-    ##   Standard Errors                             Standard
+    ##   Standard errors                             Standard
     ## 
     ## Regressions:
     ##                     Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -1449,8 +1482,7 @@ summary(
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
     ##     y5_eat_STOPEAT    1.000                               1.000    1.000
 
-Stress Behavior Pruned Model
-----------------------------
+## Stress Behavior Pruned Model
 
 ``` r
 mod_behav_stress_pruned <-
@@ -1494,13 +1526,7 @@ fit_behav_stress_pruned <-
     estimator = "DWLS", 
     ordered = c("y5_eat_STOPEAT")
   )
-```
 
-    ## Warning in lavaan::lavaan(model = mod_behav_stress_pruned, data = semTestingData %>% : lavaan WARNING: not all elements of the gradient are (near) zero;
-    ##                   the optimizer may not have found a local solution;
-    ##                   use lavInspect(fit, "optim.gradient") to investigate
-
-``` r
 summary(
   fit_behav_stress_pruned, 
   standardized = TRUE, 
@@ -1508,25 +1534,27 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 134 iterations
-    ## 
-    ##   Optimization method                           NLMINB
-    ##   Number of free parameters                         39
-    ## 
-    ##   Number of observations                           793
+    ## lavaan 0.6-5 ended normally after 134 iterations
     ## 
     ##   Estimator                                       DWLS
-    ##   Model Fit Test Statistic                      15.081
+    ##   Optimization method                           NLMINB
+    ##   Number of free parameters                         39
+    ##                                                       
+    ##   Number of observations                           793
+    ##                                                       
+    ## Model Test User Model:
+    ##                                                       
+    ##   Test statistic                                15.081
     ##   Degrees of freedom                                12
     ##   P-value (Chi-square)                           0.237
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic              861.211
+    ##   Test statistic                               861.211
     ##   Degrees of freedom                                28
     ##   P-value                                        0.000
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    0.996
     ##   Tucker-Lewis Index (TLI)                       0.991
@@ -1534,7 +1562,8 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.018
-    ##   90 Percent Confidence Interval          0.000  0.043
+    ##   90 Percent confidence interval - lower         0.000
+    ##   90 Percent confidence interval - upper         0.043
     ##   P-value RMSEA <= 0.05                          0.988
     ## 
     ## Standardized Root Mean Square Residual:
@@ -1545,7 +1574,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model        Unstructured
-    ##   Standard Errors                             Standard
+    ##   Standard errors                             Standard
     ## 
     ## Regressions:
     ##                     Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -1622,8 +1651,7 @@ summary(
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
     ##     y5_eat_STOPEAT    1.000                               1.000    1.000
 
-Stress Behavior Pruned Model - Parameter Export
------------------------------------------------
+## Stress Behavior Pruned Model - Parameter Export
 
 ``` r
 standardizedSolution(
@@ -1645,8 +1673,7 @@ standardizedSolution(
   )
 ```
 
-Stress Behavior Pruned Model - All Data
----------------------------------------
+## Stress Behavior Pruned Model - All Data
 
 ``` r
 fit_behav_stress_pruned_ad <-
@@ -1656,13 +1683,7 @@ fit_behav_stress_pruned_ad <-
     estimator = "DWLS", 
     ordered = c("y5_eat_STOPEAT")
   )
-```
 
-    ## Warning in lavaan::lavaan(model = mod_behav_stress_pruned, data = semAllData %>% : lavaan WARNING: not all elements of the gradient are (near) zero;
-    ##                   the optimizer may not have found a local solution;
-    ##                   use lavInspect(fit, "optim.gradient") to investigate
-
-``` r
 summary(
   fit_behav_stress_pruned_ad,
   standardized = TRUE, 
@@ -1670,25 +1691,27 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 141 iterations
-    ## 
-    ##   Optimization method                           NLMINB
-    ##   Number of free parameters                         39
-    ## 
-    ##   Number of observations                          2379
+    ## lavaan 0.6-5 ended normally after 141 iterations
     ## 
     ##   Estimator                                       DWLS
-    ##   Model Fit Test Statistic                      23.717
+    ##   Optimization method                           NLMINB
+    ##   Number of free parameters                         39
+    ##                                                       
+    ##   Number of observations                          2379
+    ##                                                       
+    ## Model Test User Model:
+    ##                                                       
+    ##   Test statistic                                23.717
     ##   Degrees of freedom                                12
     ##   P-value (Chi-square)                           0.022
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic             2160.714
+    ##   Test statistic                              2160.714
     ##   Degrees of freedom                                28
     ##   P-value                                        0.000
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    0.995
     ##   Tucker-Lewis Index (TLI)                       0.987
@@ -1696,7 +1719,8 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.020
-    ##   90 Percent Confidence Interval          0.007  0.032
+    ##   90 Percent confidence interval - lower         0.007
+    ##   90 Percent confidence interval - upper         0.032
     ##   P-value RMSEA <= 0.05                          1.000
     ## 
     ## Standardized Root Mean Square Residual:
@@ -1707,7 +1731,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model        Unstructured
-    ##   Standard Errors                             Standard
+    ##   Standard errors                             Standard
     ## 
     ## Regressions:
     ##                     Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -1784,11 +1808,9 @@ summary(
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
     ##     y5_eat_STOPEAT    1.000                               1.000    1.000
 
-Anxiety Behavior
-================
+# Anxiety Behavior
 
-Anxiety Behavior Initial Model
-------------------------------
+## Anxiety Behavior Initial Model
 
 ``` r
 mod_behav_anx_initial <-
@@ -1830,13 +1852,7 @@ fit_behav_anx_initial <-
     estimator = "DWLS", 
     ordered = c("y5_eat_STOPEAT")
   )
-```
 
-    ## Warning in lavaan::lavaan(model = mod_behav_anx_initial, data = semTrainingData %>% : lavaan WARNING: not all elements of the gradient are (near) zero;
-    ##                   the optimizer may not have found a local solution;
-    ##                   use lavInspect(fit, "optim.gradient") to investigate
-
-``` r
 summary(
   fit_behav_anx_initial, 
   standardized = TRUE, 
@@ -1844,25 +1860,26 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 189 iterations
-    ## 
-    ##   Optimization method                           NLMINB
-    ##   Number of free parameters                         62
-    ## 
-    ##   Number of observations                           793
+    ## lavaan 0.6-5 ended normally after 189 iterations
     ## 
     ##   Estimator                                       DWLS
-    ##   Model Fit Test Statistic                       0.000
+    ##   Optimization method                           NLMINB
+    ##   Number of free parameters                         62
+    ##                                                       
+    ##   Number of observations                           793
+    ##                                                       
+    ## Model Test User Model:
+    ##                                                       
+    ##   Test statistic                                 0.000
     ##   Degrees of freedom                                 0
-    ##   Minimum Function Value               0.0000000000000
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic              751.170
+    ##   Test statistic                               751.170
     ##   Degrees of freedom                                36
     ##   P-value                                        0.000
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    1.000
     ##   Tucker-Lewis Index (TLI)                       1.000
@@ -1870,7 +1887,8 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.000
-    ##   90 Percent Confidence Interval          0.000  0.000
+    ##   90 Percent confidence interval - lower         0.000
+    ##   90 Percent confidence interval - upper         0.000
     ##   P-value RMSEA <= 0.05                             NA
     ## 
     ## Standardized Root Mean Square Residual:
@@ -1881,7 +1899,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model        Unstructured
-    ##   Standard Errors                             Standard
+    ##   Standard errors                             Standard
     ## 
     ## Regressions:
     ##                     Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -1983,8 +2001,7 @@ summary(
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
     ##     y5_eat_STOPEAT    1.000                               1.000    1.000
 
-Anxiety Behavior Pruned Model
------------------------------
+## Anxiety Behavior Pruned Model
 
 ``` r
 mod_behav_anx_pruned <-
@@ -2029,13 +2046,7 @@ fit_behav_anx_pruned <-
     estimator = "DWLS", 
     ordered = c("y5_eat_STOPEAT")
   )
-```
 
-    ## Warning in lavaan::lavaan(model = mod_behav_anx_pruned, data = semTestingData %>% : lavaan WARNING: not all elements of the gradient are (near) zero;
-    ##                   the optimizer may not have found a local solution;
-    ##                   use lavInspect(fit, "optim.gradient") to investigate
-
-``` r
 summary(
   fit_behav_anx_pruned, 
   standardized = TRUE, 
@@ -2043,25 +2054,27 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 124 iterations
-    ## 
-    ##   Optimization method                           NLMINB
-    ##   Number of free parameters                         37
-    ## 
-    ##   Number of observations                           793
+    ## lavaan 0.6-5 ended normally after 124 iterations
     ## 
     ##   Estimator                                       DWLS
-    ##   Model Fit Test Statistic                      32.855
+    ##   Optimization method                           NLMINB
+    ##   Number of free parameters                         37
+    ##                                                       
+    ##   Number of observations                           793
+    ##                                                       
+    ## Model Test User Model:
+    ##                                                       
+    ##   Test statistic                                32.855
     ##   Degrees of freedom                                14
     ##   P-value (Chi-square)                           0.003
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic              896.673
+    ##   Test statistic                               896.673
     ##   Degrees of freedom                                28
     ##   P-value                                        0.000
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    0.978
     ##   Tucker-Lewis Index (TLI)                       0.957
@@ -2069,7 +2082,8 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.041
-    ##   90 Percent Confidence Interval          0.023  0.060
+    ##   90 Percent confidence interval - lower         0.023
+    ##   90 Percent confidence interval - upper         0.060
     ##   P-value RMSEA <= 0.05                          0.764
     ## 
     ## Standardized Root Mean Square Residual:
@@ -2080,7 +2094,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model        Unstructured
-    ##   Standard Errors                             Standard
+    ##   Standard errors                             Standard
     ## 
     ## Regressions:
     ##                     Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
@@ -2155,8 +2169,7 @@ summary(
     ##                    Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
     ##     y5_eat_STOPEAT    1.000                               1.000    1.000
 
-Anxiety Behavior Pruned Model - Parameter Export
-------------------------------------------------
+## Anxiety Behavior Pruned Model - Parameter Export
 
 ``` r
 standardizedSolution(
@@ -2178,8 +2191,7 @@ standardizedSolution(
   )
 ```
 
-Anxiety Behavior Pruned Model - All Data
-----------------------------------------
+## Anxiety Behavior Pruned Model - All Data
 
 ``` r
 fit_behav_anx_pruned_ad <-
@@ -2189,13 +2201,7 @@ fit_behav_anx_pruned_ad <-
     estimator = "DWLS", 
     ordered = c("y5_eat_STOPEAT")
   )
-```
 
-    ## Warning in lavaan::lavaan(model = mod_behav_anx_pruned, data = semAllData %>% : lavaan WARNING: not all elements of the gradient are (near) zero;
-    ##                   the optimizer may not have found a local solution;
-    ##                   use lavInspect(fit, "optim.gradient") to investigate
-
-``` r
 summary(
   fit_behav_anx_pruned_ad, 
   standardized = TRUE, 
@@ -2203,25 +2209,27 @@ summary(
 )
 ```
 
-    ## lavaan 0.6-3 ended normally after 124 iterations
-    ## 
-    ##   Optimization method                           NLMINB
-    ##   Number of free parameters                         37
-    ## 
-    ##   Number of observations                          2379
+    ## lavaan 0.6-5 ended normally after 124 iterations
     ## 
     ##   Estimator                                       DWLS
-    ##   Model Fit Test Statistic                      25.907
+    ##   Optimization method                           NLMINB
+    ##   Number of free parameters                         37
+    ##                                                       
+    ##   Number of observations                          2379
+    ##                                                       
+    ## Model Test User Model:
+    ##                                                       
+    ##   Test statistic                                25.907
     ##   Degrees of freedom                                14
     ##   P-value (Chi-square)                           0.027
     ## 
-    ## Model test baseline model:
+    ## Model Test Baseline Model:
     ## 
-    ##   Minimum Function Test Statistic             2313.755
+    ##   Test statistic                              2313.755
     ##   Degrees of freedom                                28
     ##   P-value                                        0.000
     ## 
-    ## User model versus baseline model:
+    ## User Model versus Baseline Model:
     ## 
     ##   Comparative Fit Index (CFI)                    0.995
     ##   Tucker-Lewis Index (TLI)                       0.990
@@ -2229,7 +2237,8 @@ summary(
     ## Root Mean Square Error of Approximation:
     ## 
     ##   RMSEA                                          0.019
-    ##   90 Percent Confidence Interval          0.006  0.030
+    ##   90 Percent confidence interval - lower         0.006
+    ##   90 Percent confidence interval - upper         0.030
     ##   P-value RMSEA <= 0.05                          1.000
     ## 
     ## Standardized Root Mean Square Residual:
@@ -2240,7 +2249,7 @@ summary(
     ## 
     ##   Information                                 Expected
     ##   Information saturated (h1) model        Unstructured
-    ##   Standard Errors                             Standard
+    ##   Standard errors                             Standard
     ## 
     ## Regressions:
     ##                     Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
