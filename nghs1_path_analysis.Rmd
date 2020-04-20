@@ -158,7 +158,8 @@ fit_psych_stress_pruned <-
 summary(
   fit_psych_stress_pruned, 
   standardized = TRUE, 
-  fit.measures = TRUE
+  fit.measures = TRUE,
+  rsq = TRUE
 )
 ```
 
@@ -310,7 +311,8 @@ fit_psych_anx_pruned <-
 summary(
   fit_psych_anx_pruned, 
   standardized = TRUE, 
-  fit.measures = TRUE
+  fit.measures = TRUE,
+  rsq = TRUE
 )
 ```
 
